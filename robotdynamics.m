@@ -1,5 +1,6 @@
 %robotdynamics
 %TODO add wheel diameter to calculations (scale factor)
+%TODO add slip disturbance
 function dx = robotdynamics(Ul,Ur, worldTheta,dt) %input is wheel velocities
 %x is fwd, y is left/right and cannot be travveled upon
 
