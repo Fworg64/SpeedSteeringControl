@@ -41,28 +41,28 @@ linearRobotModelA = [0,0,-1,3,0;
                     0,0,0,0,0];%integral of Steering
 linearRobotB = [0,0;0,0;0,0;1,0;0,1]; %Speed and steering input
 
-% linearRobotWithServoStates = [robotState;0;0;0;0];
-% linearRobotWithServoA = [linearRobotModelA, zeros(5, 2);
-%                         1,0,0,0,0,0,0;
-%                         0,1,0,0,0,0,0];
-% linearRobotWithServoB = [linearRobotB;zeros(2,2)];
-% 
-% linearRobotWithServoSetpoint = [0;0;0;0;0;-2;-2];
-% 
-% eig(linearRobotWithServoA)
-% 
-% linearRobotQ = [1,0,0,0,0,0,0;
-%      0,1,0,0,0,0,0;
-%      0,0,1,0,0,0,0;
-%      0,0,0,1,0,0,0;
-%      0,0,0,0,1,0,0;
-%      0,0,0,0,0,10,0;
-%      0,0,0,0,0,0,10]
-%  linearRobotR = [1,0;0,5];
-%  
-%  Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
-%  
-
+ linearRobotWithServoStates = [robotState;0;0;0;0];
+ linearRobotWithServoA = [linearRobotModelA, zeros(5, 2);
+                         1,0,0,0,0,0,0;
+                         0,1,0,0,0,0,0];
+ linearRobotWithServoB = [linearRobotB;zeros(2,2)];
+ 
+ linearRobotWithServoSetpoint = [0;0;0;0;0;-2;-2];
+ 
+ naturalroots = eig(linearRobotWithServoA)
+ 
+ linearRobotQ = [1,0,0,0,0,0,0;
+      0,1,0,0,0,0,0;
+      0,0,1,0,0,0,0;
+      0,0,0,1,0,0,0;
+      0,0,0,0,1,0,0;
+      0,0,0,0,0,10,0;
+      0,0,0,0,0,0,10];
+  linearRobotR = [1,0;0,5];
+  
+  Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
+  
+  ServoRoots = eig(linearRobotWithServoA - linearRobotWithServoB*Kx)
 
 for t = time;
 
@@ -73,13 +73,13 @@ for t = time;
     
    dlinearRobot = linearRobotModelA * linearRobotStateEstimate + linearRobotB*[SpeedInput;SteeringInput];
    linearRobotStateEstimate = linearRobotStateEstimate + dlinearRobot*dt;
-%   
-%   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringInput] + 1*linearRobotWithServoSetpoint;
-%   linerRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
-%   
-%   input = -Kx(:,1:5)*linearRobotWithServoStates(1:5) - Kx(:,6:7)*linearRobotWithServoStates(6:7);
-%   SpeedInput = input(1);
-%   SteeringInput = input(2);
+   
+   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringInput] + linearRobotWithServoSetpoint;
+   linerRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
+   
+   %input = -Kx(:,1:5)*linearRobotWithServoStates(1:5) - Kx(:,6:7)*linearRobotWithServoStates(6:7);
+   %SpeedInput = input(1);
+   %SteeringInput = input(2);
     
   %plot robot
   subplot(3,1,1);
