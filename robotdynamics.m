@@ -1,13 +1,14 @@
 %robotdynamics
 %TODO add wheel diameter to calculations (scale factor)
 %TODO add slip disturbance
+%TODO make inputs torque
 function dx = robotdynamics(Ul,Ur, worldTheta,dt) %input is wheel velocities
 %x is fwd, y is left/right and cannot be travveled upon
 
 width = .5; %width of axel
 wheeldia = .3;
 
-w = (Ur - Ul)/width; %positive is CCW, i.e. if right wheel is faster, angle is pos
+w = (Ur - Ul)/width; %positive is CCW, i.e. if right wheel is faster, angle is positive
 if (w~=0)
   R = width/2 * (Ur + Ul)/(Ur - Ul);
   %let R be on the robots Y axis

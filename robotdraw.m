@@ -1,5 +1,5 @@
 %robotdraw
-function [] = robotdraw(x,y,theta)
+function [] = robotdraw(x,y,theta, xhat, yhat, thetahat)
 fieldlength = 7.38;
 fieldwidth = 3.78;
 startinglength = 1.5;
@@ -12,6 +12,9 @@ plot([startinglength + obstaclelength,startinglength + obstaclelength],[-fieldwi
 
 
 plot([x-.25*cos(theta),x+.5*cos(theta)],[y-.25*sin(theta),y+.5*sin(theta)]);
+if (nargin>3)
+    plot([xhat-.25*cos(thetahat),xhat+.5*cos(thetahat)],[yhat-.25*sin(thetahat),yhat+.5*sin(thetahat)], '--');
+end
 xlim([0,fieldlength]);
 ylim([-fieldwidth/2,fieldwidth/2]);
 pbaspect([fieldlength,fieldwidth,1]);

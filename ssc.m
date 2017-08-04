@@ -1,6 +1,6 @@
 %speedsteeringcontrol
 %TODO show why system is unstable for speed < 2 * abs(steering)
-function [Ul,Ur] = ssc(speed, steering, cUl, cUr)
+function [Ul,Ur] = ssc(speed, steering, cUl, cUr) %inputs are desired speed and steering and current wheel speeds, returns new wheel speed to set.
 
 Ur1 = speed;
 Ul1 = speed;
