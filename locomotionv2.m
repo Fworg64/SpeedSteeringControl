@@ -3,13 +3,13 @@
 
 %simulation variables
 dt = .01;
-time = 0:dt:2;
+time = 0:dt:1;
 
 Ul =1;
 Ur =1;
 
 SpeedInput = 4;
-SteeringInput = 3.5;
+SteeringInput = 1.5;
 
 robotState = [1;1;0];
 
@@ -24,6 +24,9 @@ Uplotindex=1;
 
 sscPlot = zeros(2,length(time));
 sscPlotindex=1;
+
+posPlot = zeros(6, length(time));
+posPlotindex=1;
 % 
 % linearRobotStateEstimate = [robotState;0];
 % linearRobotModelA = [0,0,0,-.1;
@@ -34,12 +37,16 @@ sscPlotindex=1;
 
 % 
 linearRobotStateEstimate = [robotState;0;0];
-linearRobotModelA = [0,0,-1,3,0;
-                    0,0,1,0,-5;
-                    0,0,0,0,-10;
+linearRobotModelA = [0,0,-.1,1,0;%dx pos
+                    0,0,.5,0,0;%dy pos
+                    0,0,0,0,-2;%dtheta
                     0,0,0,0,0; %integral of Speed
                     0,0,0,0,0];%integral of Steering
-linearRobotB = [0,0;0,0;0,0;1,0;0,1]; %Speed and steering input
+linearRobotB = [1,0;
+                0,-.5;
+                0,-2;
+                1,0;
+                0,1]; %Speed and steering input
 
  linearRobotWithServoStates = [robotState;0;0;0;0];
  linearRobotWithServoA = [linearRobotModelA, zeros(5, 2);
@@ -47,18 +54,18 @@ linearRobotB = [0,0;0,0;0,0;1,0;0,1]; %Speed and steering input
                          0,1,0,0,0,0,0];
  linearRobotWithServoB = [linearRobotB;zeros(2,2)];
  
- linearRobotWithServoSetpoint = [0;0;0;0;0;-2;-2];
+ linearRobotWithServoSetpoint = -[0;0;0;0;0;3;1];
  
- naturalroots = eig(linearRobotWithServoA)
+ %naturalroots = eig(linearRobotWithServoA)
  
- linearRobotQ = [1,0,0,0,0,0,0;
-      0,1,0,0,0,0,0;
-      0,0,1,0,0,0,0;
-      0,0,0,1,0,0,0;
-      0,0,0,0,1,0,0;
-      0,0,0,0,0,10,0;
-      0,0,0,0,0,0,10];
-  linearRobotR = [1,0;0,5];
+ linearRobotQ = [100,0,0,0,0,0,0;
+                0,100,0,0,0,0,0;
+                0,0,1,0,0,0,0;
+                0,0,0,1,0,0,0;
+                0,0,0,0,1,0,0;
+                0,0,0,0,0,100,0;
+                0,0,0,0,0,0,100];
+  linearRobotR = [1,0;0,1];
   
   Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
   
@@ -75,14 +82,14 @@ for t = time;
    linearRobotStateEstimate = linearRobotStateEstimate + dlinearRobot*dt;
    
    dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringInput] + linearRobotWithServoSetpoint;
-   linerRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
+   linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
    
-   %input = -Kx(:,1:5)*linearRobotWithServoStates(1:5) - Kx(:,6:7)*linearRobotWithServoStates(6:7);
-   %SpeedInput = input(1);
-   %SteeringInput = input(2);
+   input = -Kx(:,1:5)*linearRobotWithServoStates(1:5) - Kx(:,6:7)*linearRobotWithServoStates(6:7);
+  % SpeedInput = input(1);
+  % SteeringInput = input(2);
     
   %plot robot
-  subplot(3,1,1);
+  subplot(2,2,1);
   hold on;
   robotdraw(robotState(1),robotState(2),robotState(3),linearRobotStateEstimate(1), linearRobotStateEstimate(2), linearRobotStateEstimate(3));
   %%plot path points
@@ -98,17 +105,27 @@ for t = time;
   hold off;
 
   %plot motor inputs
-  subplot(3,1,2);
+  subplot(2,2,2);
   Uplot(:,Uplotindex) = [Ul;Ur];
   plot([0:dt:t],Uplot(:,1:Uplotindex));
+  legend('LeftWheel Speed', 'Right Wheel Speed');
   Uplotindex = Uplotindex+1;
   
   %plot speed and steering
-  subplot(3,1,3);
+  subplot(2,2,3);
   sscPlot(:,sscPlotindex) = [SpeedInput,SteeringInput];
   plot([0:dt:t],sscPlot(:,1:sscPlotindex));
+  legend('SpeedInput', 'SteeringInput');
   sscPlotindex = sscPlotindex +1;
   
+  %plot graph of x y and theta
+  subplot(2,2,4);
+  posPlot(:,posPlotindex) = [robotState(1:3)', linearRobotStateEstimate(1:3)'];
+  plot([0:dt:t], posPlot(1:3, 1:posPlotindex), '-', [0:dt:t], posPlot(4:6, 1:posPlotindex), '--');
+  legend('X', 'Y', '\theta','X estimate','Y estimate', '\theta estimate');
+  posPlotindex = posPlotindex+1; 
+  
+  
 end
-subplot(3,1,1);
-robotdraw(robotState(1),robotState(2),robotState(3)); %needed to hold last frame
+subplot(2,2,1);
+robotdraw(robotState(1),robotState(2),robotState(3), linearRobotStateEstimate(1), linearRobotStateEstimate(2), linearRobotStateEstimate(3)); %needed to hold last frame
