@@ -8,7 +8,7 @@ time = 0:dt:1;
 Ul =1;
 Ur =1;
 
-SpeedInput = 4;
+SpeedInput = -4;
 SteeringInput = 1.5;
 
 robotState = [1;1;0];
@@ -37,14 +37,14 @@ posPlotindex=1;
 
 % 
 linearRobotStateEstimate = [robotState;0;0];
-linearRobotModelA = [0,0,-.1,1,0;%dx pos
-                    0,0,.5,0,0;%dy pos
+linearRobotModelA = [0,0,0,1,0;%dx pos
+                    0,0,-.1,0,0;%dy pos
                     0,0,0,0,-2;%dtheta
                     0,0,0,0,0; %integral of Speed
                     0,0,0,0,0];%integral of Steering
 linearRobotB = [1,0;
-                0,-.5;
                 0,-2;
+                0,-3;
                 1,0;
                 0,1]; %Speed and steering input
 

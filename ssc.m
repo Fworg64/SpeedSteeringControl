@@ -7,6 +7,10 @@ Ul1 = speed;
 dUr1 =0;
 dUl1=0;
 
+if (speed<0) %not default, makes theta linear with steering rather than y
+    steering = -steering;
+end;
+
 if (steering>0 && cUl ~=0) % if steering right, and dont '/0'
   dUl1 = steering; %juice the left
   dUr1 = -cUr/cUl * dUl1; %prop the right
@@ -24,10 +28,15 @@ elseif (cUl==0 || cUr ==0) %not moving
   dUl1 = .1; %tappy tap tap
 end;
 
-if (speed<0)
+if (speed<0) %default
     dUr1 = -dUr1;
     dUl1 = -dUl1;
 end
+%if (speed<0) %not default
+%    tempp = dUr1;
+%    dUr1 = -dUl1;
+%    dUl1 = -tempp;
+%end
 
 Ur = Ur1 + dUr1;
 Ul = Ul1 + dUl1;
