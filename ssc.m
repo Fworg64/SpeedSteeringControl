@@ -1,6 +1,7 @@
 %speedsteeringcontrol
 %TODO show why system is unstable for speed < 2 * abs(steering)
-function [Ul,Ur] = ssc(speed, steering, cUl, cUr) %inputs are desired speed and steering and current wheel speeds, returns new wheel speed to set.
+function [Ul,Ur] = ssc(speed, steering, cUl, cUr) %inputs are desired speed and turn radius and current wheel speeds, returns new wheel speed to set.
+ %has wierd bullshit if one speed approaches 0
 
 Ur1 = speed;
 Ul1 = speed;
@@ -23,9 +24,9 @@ elseif (steering==0) %if only moving forward
 elseif (speed ==0) %turning in place or not moving
   dUr1 = -steering;
   dUl1 = steering;
-elseif (cUl==0 || cUr ==0) %not moving
-  dUr1 = .1;
-  dUl1 = .1; %tappy tap tap
+%elseif (cUl==0 || cUr ==0) %not moving
+%  dUr1 = .1;
+%  dUl1 = .1; %tappy tap tap
 end;
 
 if (speed<0) %default

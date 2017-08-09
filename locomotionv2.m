@@ -1,15 +1,16 @@
 %locomotion area
-%takes speed and steering input into simulation and shows model
+%takes speed and turn radius input (steering) into simulation and shows model
 
 %simulation variables
 dt = .01;
-time = 0:dt:5;
+time = 0:dt:1;
 
 Ul =1;
 Ur =1;
 
 SpeedInput = 0;
 SteeringInput = 0;
+SteeringAccelInput=0;
 
 robotState = [1;1;0];
 
@@ -25,7 +26,7 @@ Uplotindex=1;
 sscPlot = zeros(2,length(time));
 sscPlotindex=1;
 
-posPlot = zeros(6, length(time));
+posPlot = zeros(4, length(time));
 posPlotindex=1;
 
 linearRobotStateEstimate = [0;0;0];
@@ -50,21 +51,21 @@ linearRobotStateEstimate = [0;0;0];
 %                1,0;
 %                0,1]; %Speed and steering input
 
- linearRobotWithServoStates = [0;0;0;0];
- linearRobotWithServoA = [0,0,0,0;
-                          0,0,0,0;
-                         1,0,0,0;
-                         0,1,0,0];
+ linearRobotWithServoStates = [0;-.1;0;0];
+ linearRobotWithServoA = [0,0,0,0; %integral of speedInput (distance)
+                          0,0,0,0; %integral of steeringAccel (Steering)
+                         1,0,0,0; %error between distance and distance setpoint
+                         0,1,0,0];%error between Steering and Steering setpoint
  linearRobotWithServoB = [1,0;0,1;0,0;0,0];
  
-linearRobotWithServoSetpoint = -[0;0;3;.2];
+linearRobotWithServoSetpoint = -[0;0;3.1415;-.5];
  
  %naturalroots = eig(linearRobotWithServoA)
  
- linearRobotQ = [100,0,0,0;
-                0,100,0,0,;
-                0,0,10,0;
-                0,0,0,10];
+ linearRobotQ = [10,0,0,0;
+                0,10,0,0,;
+                0,0,100,0;
+                0,0,0,100000];
   linearRobotR = [1,0;0,1];
   
   Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
@@ -73,7 +74,8 @@ linearRobotWithServoSetpoint = -[0;0;3;.2];
 
 for t = time;
 
-  [Ul, Ur] = ssc(SpeedInput, SteeringInput, Ul, Ur);
+  %[Ul, Ur] = ssc(SpeedInput, SteeringInput, Ul, Ur);
+  [Ul, Ur] = sscv2(SpeedInput, SteeringInput, 1, .5);
   
   drobotState = robotdynamics(Ul, Ur, robotState(3), dt);
   robotState = robotState + drobotState;
@@ -81,12 +83,13 @@ for t = time;
    %dlinearRobot = linearRobotModelA * linearRobotStateEstimate + linearRobotB*[SpeedInput;SteeringInput];
    %linearRobotStateEstimate = linearRobotStateEstimate + dlinearRobot*dt;
    
-   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringInput] + linearRobotWithServoSetpoint;
+   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + linearRobotWithServoSetpoint;
    linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
    
    input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:4)*linearRobotWithServoStates(3:4);
   SpeedInput = input(1);
-  SteeringInput = input(2);
+  SteeringAccelInput = input(2);
+  SteeringInput = linearRobotWithServoStates(2);
     
   %plot robot
   subplot(2,2,1);
@@ -118,12 +121,12 @@ for t = time;
   legend('SpeedInput', 'SteeringInput');
   sscPlotindex = sscPlotindex +1;
   
-  %plot graph of x y and theta
-  %subplot(2,2,4);
-  %posPlot(:,posPlotindex) = [robotState(1:3)', linearRobotStateEstimate(1:3)'];
-  %plot([0:dt:t], posPlot(1:3, 1:posPlotindex), '-', [0:dt:t], posPlot(4:6, 1:posPlotindex), '--');
-  %legend('X', 'Y', '\theta','X estimate','Y estimate', '\theta estimate');
-  %posPlotindex = posPlotindex+1; 
+  %plot graph of servo states
+  subplot(2,2,4);
+  posPlot(:,posPlotindex) = [linearRobotWithServoStates(1:4)'];
+  plot([0:dt:t], posPlot(1:2, 1:posPlotindex), '-', [0:dt:t], posPlot(3:4, 1:posPlotindex), '--');
+  legend('Distance', 'SteeringInput', 'SpeedServo', 'SteeringServo');
+  posPlotindex = posPlotindex+1; 
   
   
 end
