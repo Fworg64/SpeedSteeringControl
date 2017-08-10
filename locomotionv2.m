@@ -1,9 +1,12 @@
 %locomotion area
 %takes speed and turn radius input (steering) into simulation and shows model
 
+waypoint = [2,1,3.14]; %relative to robot
+[Distance, Radius] = waypoint2setpoints(waypoint(1),waypoint(2),waypoint(3))
+
 %simulation variables
 dt = .01;
-time = 0:dt:1;
+time = 0:dt:2;
 
 Ul =1;
 Ur =1;
@@ -12,7 +15,8 @@ SpeedInput = 0;
 SteeringInput = 0;
 SteeringAccelInput=0;
 
-robotState = [1;1;0];
+InitialRobotState = [1;1;0];
+robotState = InitialRobotState;
 
 %plotting records
 crumbcounter = 21;
@@ -58,7 +62,7 @@ linearRobotStateEstimate = [0;0;0];
                          0,1,0,0];%error between Steering and Steering setpoint
  linearRobotWithServoB = [1,0;0,1;0,0;0,0];
  
-linearRobotWithServoSetpoint = -[0;0;3.1415;-.5];
+linearRobotWithServoSetpoint = -[0;0;Distance;Radius];
  
  %naturalroots = eig(linearRobotWithServoA)
  
@@ -105,6 +109,7 @@ for t = time;
     crumbs(:,crumbindex) = robotState(1:2);
   end
   scatter(crumbs(1,1:crumbindex),crumbs(2,1:crumbindex));
+  %plot waypoint
   hold off;
 
   %plot motor inputs
