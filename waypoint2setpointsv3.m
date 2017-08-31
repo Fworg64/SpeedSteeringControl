@@ -10,9 +10,16 @@
 function [firstdistance, firstradius, seconddistance, secondradius] = waypoint2setpointsv3(x1, y1, theta)
 %theta is in rad and ranges -pi to pi, x and y are in meters
 
-xintercept = -y1/tan(theta) - x1;
+%find x intercept
+% y - y1 = m(x - x1)
+% 0 -y1 = tan(theta)(x-x1)
+% -y1 = tan(theta)*x - tan(theta)*x1
+% -tan(theta)*x =y1 - tan(theta)*x1
+% x = -y1/tan(theta) + x1
 
-if (xintercept>=0 && (y1 <0 &&theta >0 && theta <pi || y1>0 && theta <0 && theta > -pi)) %if x intercept is greater than 0 and final orientation is facing away from starting center line
+xintercept = -y1/tan(theta) + x1;
+
+if (xintercept>=0 && (y1 >0 &&theta >0 && theta <pi || y1<0 && theta <0 && theta > -pi)) %if x intercept is greater than 0 and final orientation is facing away from starting center line
    %find intersection point and which point is closest
    %intersection point is (xintercept,0)
    %find distance to waypoint from intersection
@@ -46,15 +53,19 @@ if (xintercept>=0 && (y1 <0 &&theta >0 && theta <pi || y1>0 && theta <0 && theta
      %cirle eq: radius^2 = (x-xcenter)^2 + (y - ycenter)^2
      %%circle eq: x = sqrt(radius^2 - (y - ycenter)^2) + xcenter
      %%% combined eq: xtangent = sqrt(radius^2 - (tan(theta)*(xtangent -x1) + y1 -ycenter)^2) + xcenter;
-     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent - tan(theta)*x1 + y1 - ycenter)^2) + xcenter;
-     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent - KNOWNTERM)^2) + xcenter;
-     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent)^2 - KNOWNTERM*tan(theta)*xtangent + KNOWNTERM^2) + xcenter;
-     %%% (xtangent - xcenter)^2 = radius^2 - (tan(theta)*xtangent)^2 - KNOWNTERM*tan(theta)*xtangent + KNOWNTERM^2;
-     %%%(xtangent - xcenter)^2 + (tan(theta)*xtangent)^2 + KNOWNTERM*tan(theta)*xtangent = radius^2 + KNOWNTERM^2;
-     %%% xtangent^2 - xcenter*xtangent + xcenter^2 + tan(theta)^2*xtangent^2 + KNOWNTERM * tan(theta)*xtangent = radius^2 + KNOWNTERM^2
-     %%% (1 - tan(theta)^2) * (xtangent^2) + (-xcenter + KNOWNTERM * tan(theta))*xtangent = radius^2 + KNOWNTERM^2 - xcenter^2
-     xtangent = (-(-xcenter +KNOWNTERM*tan(theta)) + sqrt((-xcenter+KNOWNTERM*tan(theta))^2 - 4*(1-tan(theta)^2)*(-radius^2-KNOWNTERM^2+xcenter^2)))/(2*(1-tan(theta)^2));
-     xtangent = (-(-xcenter +KNOWNTERM*tan(theta)) - sqrt((-xcenter+KNOWNTERM*tan(theta))^2 - 4*(1-tan(theta)^2)*(-radius^2-KNOWNTERM^2+xcenter^2)))/(2*(1-tan(theta)^2));
+     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent + -tan(theta)*x1 + y1 + -ycenter)^2) + xcenter; %careful with sign and grouping knownterms
+     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent + KNOWNTERM)^2) + xcenter;
+     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent)^2 + KNOWNTERM*tan(theta)*xtangent + KNOWNTERM^2) + xcenter;
+     %%% (xtangent - xcenter)^2 = radius^2 - (tan(theta)*xtangent)^2 + KNOWNTERM*tan(theta)*xtangent + KNOWNTERM^2;
+     %%%(xtangent - xcenter)^2 + (tan(theta)*xtangent)^2 - KNOWNTERM*tan(theta)*xtangent = radius^2 + KNOWNTERM^2;
+     %%% xtangent^2 - xcenter*xtangent + xcenter^2 + tan(theta)^2*xtangent^2 - KNOWNTERM * tan(theta)*xtangent = radius^2 + KNOWNTERM^2
+     %%% (1 + tan(theta)^2) * (xtangent^2) + (-xcenter - KNOWNTERM * tan(theta))*xtangent = radius^2 + KNOWNTERM^2 - xcenter^2
+     
+     
+     %%%%PROBLEMS HERE, check derivation...
+     KNOWNTERM = -tan(theta)*x1 + y1 - ycenter;
+     xtangent = (-(-xcenter -KNOWNTERM*tan(theta)) + sqrt((-xcenter-KNOWNTERM*tan(theta))^2 - 4*(1+tan(theta)^2)*(-radius^2-KNOWNTERM^2+xcenter^2)))/(2*(1-tan(theta)^2));
+     xtangent = (-(-xcenter -KNOWNTERM*tan(theta)) - sqrt((-xcenter-KNOWNTERM*tan(theta))^2 - 4*(1+tan(theta)^2)*(-radius^2-KNOWNTERM^2+xcenter^2)))/(2*(1-tan(theta)^2));
      %should be equal
      ytangent = tan(theta)*xtangent - x1 + y1;
    else
@@ -92,7 +103,7 @@ if (xintercept>=0 && (y1 <0 &&theta >0 && theta <pi || y1>0 && theta <0 && theta
 else
     firstdistance = 1;
     firstradius = 100000;
-    seconddistance = 1;
+    seconddistance = 69;
     secondradius = 3;
     
 end
