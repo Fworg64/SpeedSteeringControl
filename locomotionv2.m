@@ -2,8 +2,10 @@
 %takes speed and turn radius input (steering) into simulation and shows model
 
 waypoint = [2,1,3.14]; %relative to robot
-[Distance, Radius] = waypoint2setpoints(waypoint(1),waypoint(2),waypoint(3))
+%[Distance, Radius] = waypoint2setpoints(waypoint(1),waypoint(2),waypoint(3))
 
+Distance = 2;
+Radius = 2;
 %simulation variables
 dt = .01;
 time = 0:dt:2;
