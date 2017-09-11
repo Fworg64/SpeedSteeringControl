@@ -1,5 +1,8 @@
 %locomotion area
 %takes speed and turn radius input (steering) into simulation and shows model
+%TODO, add odometer module and take input from it (model that gives estimated distance travelled from wheel velocities)
+%TODO, add path-turn compensation module and take input from it (turn towards position on path, uses odemter to determine what the position should be for the given path)
+%TODO, add slip detection module and take input from it (throttle speed if wheel RPM is too high for input torque)
 
 waypoint = [2,1,pi/4]; %relative to robot
 %[Distance, Radius, Distance2, Radius2] = waypoint2setpointsv3(waypoint(1),waypoint(2),waypoint(3))
@@ -8,9 +11,10 @@ Distance = 1;
 Radius = 5;%-.7;
 Distance2 = 1;
 Radius2 = 5;%.4;
+firstwaypointmet =0;
 
 dt = .01;
-time = 0:dt:2;
+time = 0:dt:3;
 
 wheelR = .3;
 AxelLen = .5;
@@ -94,9 +98,10 @@ for t = time;
    %dlinearRobot = linearRobotModelA * linearRobotStateEstimate + linearRobotB*[SpeedInput;SteeringInput];
    %linearRobotStateEstimate = linearRobotStateEstimate + dlinearRobot*dt;
    
-   if (linearRobotWithServoStates(1) > .95 * Distance) %switch setpoints if distance has been travelled
+   if (linearRobotWithServoStates(1) > .95 * Distance && firstwaypointmet ==0) %switch setpoints if distance has been travelled
     linearRobotWithServoSetpoint = -[0;0;Distance2;Radius2];
-    linearRobotWithServoStates = [0;0;0;0];
+    linearRobotWithServoStates = [0;Radius2;0;0];
+    firstwaypointmet =1;
    end
    
    dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + linearRobotWithServoSetpoint;
