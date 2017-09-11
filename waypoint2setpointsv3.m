@@ -48,26 +48,13 @@ if (xintercept>=0 && (y1 >0 &&theta >0 && theta <pi || y1<0 && theta <0 && theta
    %after that, find the remaining distance to travel
    
    if (distancetostartsq <distancetoendsq)
-     %tangent point will be on the waypoint line
+     %tangent point will be on the waypoint line and the intersection of line normal to waypoint line through cirlce center
      %waypoint eq : y  = tan(theta) * (x- x1) +y1
-     %cirle eq: radius^2 = (x-xcenter)^2 + (y - ycenter)^2
-     %%circle eq: x = sqrt(radius^2 - (y - ycenter)^2) + xcenter
-     %%% combined eq: xtangent = sqrt(radius^2 - (tan(theta)*(xtangent -x1) + y1 -ycenter)^2) + xcenter;
-     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent + -tan(theta)*x1 + y1 + -ycenter)^2) + xcenter; %careful with sign and grouping knownterms
-     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent + KNOWNTERM)^2) + xcenter;
-     %%% xtangent = sqrt(radius^2 - (tan(theta)*xtangent)^2 + KNOWNTERM*tan(theta)*xtangent + KNOWNTERM^2) + xcenter;
-     %%% (xtangent - xcenter)^2 = radius^2 - (tan(theta)*xtangent)^2 + KNOWNTERM*tan(theta)*xtangent + KNOWNTERM^2;
-     %%%(xtangent - xcenter)^2 + (tan(theta)*xtangent)^2 - KNOWNTERM*tan(theta)*xtangent = radius^2 + KNOWNTERM^2;
-     %%% xtangent^2 - xcenter*xtangent + xcenter^2 + tan(theta)^2*xtangent^2 - KNOWNTERM * tan(theta)*xtangent = radius^2 + KNOWNTERM^2
-     %%% (1 + tan(theta)^2) * (xtangent^2) + (-xcenter - KNOWNTERM * tan(theta))*xtangent = radius^2 + KNOWNTERM^2 - xcenter^2
+     %normal line through center of cirle
+     % y = -1/tan(theta) * (x - xcenter) + ycenter;
+     xtangent = ((tan(theta))^2 * x1 - y1*tan(theta) + xcenter + ycenter*tan(theta))/((tan(theta))^2+1);
+     ytangent = tan(theta) * (xtangent - x1) + y1;
      
-     
-     %%%%PROBLEMS HERE, check derivation...
-     KNOWNTERM = -tan(theta)*x1 + y1 - ycenter;
-     xtangent = (-(-xcenter -KNOWNTERM*tan(theta)) + sqrt((-xcenter-KNOWNTERM*tan(theta))^2 - 4*(1+tan(theta)^2)*(-radius^2-KNOWNTERM^2+xcenter^2)))/(2*(1-tan(theta)^2));
-     xtangent = (-(-xcenter -KNOWNTERM*tan(theta)) - sqrt((-xcenter-KNOWNTERM*tan(theta))^2 - 4*(1+tan(theta)^2)*(-radius^2-KNOWNTERM^2+xcenter^2)))/(2*(1-tan(theta)^2));
-     %should be equal
-     ytangent = tan(theta)*xtangent - x1 + y1;
    else
      %tangent point will be on the start line (xaxis)
      %start line eq: y=0;
@@ -87,20 +74,21 @@ if (xintercept>=0 && (y1 >0 &&theta >0 && theta <pi || y1<0 && theta <0 && theta
      firstradius = radius;
      %also calculate second distnace and radius
      seconddistance = sqrt((xtangent - x1)^2 + (ytangent - y1)^2);
-     secondradius = 100000; %infinity
+     secondradius = 100; %infinity
    else
      %arc is from tangent point to waypoint
      %find angle from tangent point (drawn back to center to waypoint drawn back to center
-     arcangle = pi/2 + atan((ytangent - ycenter)/(xtangent - xcenter));
+     arcangle = pi/2 + atan((ytangent - ycenter)/(xtangent - xcenter)); %care! division by zeros if xtangent = xcenter (happens if final orientation is pi/2 or under other circumstances)
      seconddistance = arcangle*radius;
      secondradius = radius;
      %also caluclate first distance and radius
      firstdistance = xtangent;
-     firstradius = 100000; %infinity
+     firstradius = 100; %infinity
    
    end
 
 else
+    %need two turn method
     firstdistance = 1;
     firstradius = 100000;
     seconddistance = 69;

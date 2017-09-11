@@ -1,11 +1,11 @@
 %locomotion area
 %takes speed and turn radius input (steering) into simulation and shows model
 
-waypoint = [2,1,3.14]; %relative to robot
-%[Distance, Radius] = waypoint2setpoints(waypoint(1),waypoint(2),waypoint(3))
+waypoint = [2,1,pi/4]; %relative to robot
+[Distance, Radius, Distance2, Radius2] = waypoint2setpointsv3(waypoint(1),waypoint(2),waypoint(3))
 
-Distance = 2;
-Radius = 2;
+%Distance = 2;
+%Radius = 2000000;
 %simulation variables
 dt = .01;
 time = 0:dt:2;
@@ -57,7 +57,7 @@ linearRobotStateEstimate = [0;0;0];
 %                1,0;
 %                0,1]; %Speed and steering input
 
- linearRobotWithServoStates = [0;-.1;0;0];
+ linearRobotWithServoStates = [0;Radius;0;0]; %start with the steering wheel in the right spot
  linearRobotWithServoA = [0,0,0,0; %integral of speedInput (distance)
                           0,0,0,0; %integral of steeringAccel (Steering)
                          1,0,0,0; %error between distance and distance setpoint
@@ -81,13 +81,17 @@ linearRobotWithServoSetpoint = -[0;0;Distance;Radius];
 for t = time;
 
   %[Ul, Ur] = ssc(SpeedInput, SteeringInput, Ul, Ur);
-  [Ul, Ur] = sscv2(SpeedInput, SteeringInput, 1, .5);
+  [Ul, Ur] = sscv2(SpeedInput, SteeringInput, .3, .5, 15);
   
   drobotState = robotdynamics(Ul, Ur, robotState(3), dt);
   robotState = robotState + drobotState;
     
    %dlinearRobot = linearRobotModelA * linearRobotStateEstimate + linearRobotB*[SpeedInput;SteeringInput];
    %linearRobotStateEstimate = linearRobotStateEstimate + dlinearRobot*dt;
+   
+   if (linearRobotWithServoStates(1) > .95 * Distance) %switch setpoints if distance has been travelled
+    linearRobotWithServoSetpoint = [0;0;Distance2;Radius2];
+   end
    
    dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + linearRobotWithServoSetpoint;
    linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
