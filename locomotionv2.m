@@ -45,26 +45,10 @@ posPlot = zeros(4, length(time));
 posPlotindex=1;
 
 linearRobotStateEstimate = [0;0;0];
-% 
-% linearRobotStateEstimate = [robotState;0];
-% linearRobotModelA = [0,0,0,-.1;
-%                      0,0,0,0;
-%                      0,0,0,0;
-%                      0,0,1,0];
-% linearRobotB = [2,-1;0,-.5;0,-.10;0,0]; %linear model from velocitiy inputs, includes integral of 
 
-% 
-%linearRobotStateEstimate = [robotState;0;0];
-%linearRobotModelA = [0,0,0,1,0;%dx pos
-%                    0,0,-.1,0,0;%dy pos
-%                    0,0,0,0,-2;%dtheta
-%                    0,0,0,0,0; %integral of Speed
-%                    0,0,0,0,0];%integral of Steering
-%linearRobotB = [1,0;
-%                0,-2;
-%                0,-3;
-%                1,0;
-%                0,1]; %Speed and steering input
+%need to add path error/compensation term to control states
+%how to do this?
+%
 
  linearRobotWithServoStates = [0;Radius;0;0]; %start with the steering wheel in the right spot
  linearRobotWithServoA = [0,0,0,0; %integral of speedInput (distance)
@@ -89,16 +73,23 @@ linearRobotWithServoSetpoint = -[0;0;Distance;Radius];
 
 for t = time;
 
-  %[Ul, Ur] = ssc(SpeedInput, SteeringInput, Ul, Ur);
-  [Ul, Ur] = sscv2(SpeedInput, SteeringInput, wheelR, AxelLen, 15);
+  [Ul, Ur] = sscv2(SpeedInput, SteeringInput, wheelR, AxelLen, 15); 
+  %add noise to Ul Ur here
+  
   
   drobotState = robotdynamics(Ul, Ur, robotState(3), dt, wheelR, AxelLen);
   robotState = robotState + drobotState;
-    
-   %dlinearRobot = linearRobotModelA * linearRobotStateEstimate + linearRobotB*[SpeedInput;SteeringInput];
-   %linearRobotStateEstimate = linearRobotStateEstimate + dlinearRobot*dt;
-   
-   if (linearRobotWithServoStates(1) > .95 * Distance && firstwaypointmet ==0) %switch setpoints if distance has been travelled
+  
+  %read back estimate of control states from robot states
+  %get speed from l2 norm of dx and dy
+  %get distance along arc from start to point on arc closest to current position? <---- winner
+  %need to get path compensation/error term 
+  %%desired x = r * cos (distance/r)
+  %%desired y = r * cos (distance/r)
+  %%%should be proportional to l1 norm of desired x,y and current x,y
+
+   %switch setpoints if distance has been travelled
+   if (linearRobotWithServoStates(1) > .95 * Distance && firstwaypointmet ==0) 
     linearRobotWithServoSetpoint = -[0;0;Distance2;Radius2];
     linearRobotWithServoStates = [0;Radius2;0;0];
     firstwaypointmet =1;
