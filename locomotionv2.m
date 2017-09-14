@@ -8,9 +8,9 @@ waypoint = [2,1,pi/4]; %relative to robot
 %[Distance, Radius, Distance2, Radius2] = waypoint2setpointsv3(waypoint(1),waypoint(2),waypoint(3))
 
 Distance = 1;
-Radius = 5;%-.7;
+Radius = 2;%-.7;
 Distance2 = 1;
-Radius2 = 5;%.4;
+Radius2 = -2;%.4;
 firstwaypointmet =0;
 
 dt = .01;
