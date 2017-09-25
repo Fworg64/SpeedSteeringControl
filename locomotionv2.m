@@ -4,13 +4,29 @@
 %TODO, add path-turn compensation module and take input from it (turn towards position on path, uses odemter to determine what the position should be for the given path)
 %TODO, add slip detection module and take input from it (throttle speed if wheel RPM is too high for input torque)
 
-waypoint = [2,1,pi/4]; %relative to robot
-%[Distance, Radius, Distance2, Radius2] = waypoint2setpointsv3(waypoint(1),waypoint(2),waypoint(3))
+InitialRobotState = [1;0;0];
+robotState = InitialRobotState;
 
-Distance = 1;
-Radius = 2;%-.7;
-Distance2 = 1;
-Radius2 = -2;%.4;
+waypoint = [3;1;pi/4]; % world coord
+%transform waypoint to robot coordinates
+%translate and then rotate
+waypointTrans = waypoint - InitialRobotState;
+waypointRot = [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRobotState(3)),cos(InitialRobotState(3))] *  [waypointTrans(1);waypointTrans(2)];
+waypointRobotCoord = [waypointRot(1);waypointRot(2);waypointTrans(3)]
+
+[Distance, Radius, Distance2, Radius2, xcenterUT, ycenterUT, xcenter2UT, ycenter2UT] = waypoint2setpointsv3(waypointRobotCoord(1),waypointRobotCoord(2),waypointRobotCoord(3))
+%transform turn centers to world coordinates
+%translate, then rotate
+center1 = [xcenterUT;ycenterUT] + [InitialRobotState(1);InitialRobotState(2)];
+center1 =  [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRobotState(3)),cos(InitialRobotState(3))] * [center1(1);center1(2)]
+
+center2 = [xcenter2UT; ycenter2UT]+ [InitialRobotState(1);InitialRobotState(2)];
+center2 =  [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRobotState(3)),cos(InitialRobotState(3))] * [center2(1);center2(2)]
+
+%Distance = 1;
+%Radius = 2;%-.7;
+%Distance2 = 1;
+%Radius2 = -2;%.4;
 firstwaypointmet =0;
 
 dt = .01;
@@ -25,9 +41,6 @@ Ur =1;
 SpeedInput = 0;
 SteeringInput = 0;
 SteeringAccelInput=0;
-
-InitialRobotState = [1;1;0];
-robotState = InitialRobotState;
 
 %plotting records
 crumbcounter = 21;
@@ -50,21 +63,29 @@ linearRobotStateEstimate = [0;0;0];
 %how to do this?
 %
 
- linearRobotWithServoStates = [0;Radius;0;0]; %start with the steering wheel in the right spot
- linearRobotWithServoA = [0,0,0,0; %integral of speedInput (distance)
-                          0,0,0,0; %integral of steeringAccel (Steering)
-                         1,0,0,0; %error between distance and distance setpoint
-                         0,1,0,0];%error between Steering and Steering setpoint
- linearRobotWithServoB = [1,0;0,1;0,0;0,0];
+ linearRobotWithServoStates = [0;Radius;0;0;0]; %start with the steering wheel in the right spot
+ linearRobotWithServoA = [0,0,0,0,0; %integral of speedInput (distance)
+                          0,0,0,0,.2; %integral of steeringAccel (Steering)
+                         1,0,0,0,0; %error between distance and distance setpoint
+                         0,1,0,0,0; %error between Steering and Steering setpoint
+                         0,0,0,0,-.2] %path error/ turn compensation (truely: l1 norm between current pos and closest point on path, 
+                                          %linearly: proportional to the difference between the current turn radius and the setpoint, but decreases with time?
+                                          %could be steeringAccel - itself (if you are changing the wheel you are fucked up)
+ linearRobotWithServoB = [1,0; %speed input
+                          0,1; %steeringAccel
+                          0,0; %no input to servo states
+                          0,0; %no input to servo states
+                          0,1];%if you are steering, you are compensating
  
-linearRobotWithServoSetpoint = -[0;0;Distance;Radius];
+linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
  
  %naturalroots = eig(linearRobotWithServoA)
  
- linearRobotQ = [10,0,0,0;
-                0,10,0,0,;
-                0,0,100,0;
-                0,0,0,100000];
+ linearRobotQ = [10,0,0,0,0;
+                0,10,0,0,0;
+                0,0,100,0,0;
+                0,0,0,1000,0
+                0,0,0,0,100];
   linearRobotR = [1,0;0,1];
   
   Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
@@ -82,23 +103,32 @@ for t = time;
   
   %read back estimate of control states from robot states
   %get speed from l2 norm of dx and dy
+  speedEstimate = sqrt(drobotState(1)^2 + drobotState(2)^2);
   %get distance along arc from start to point on arc closest to current position? <---- winner
+  %%this is also the point on the circle that is on the line through the center of the circle and the robots pos
+  %%need to get center of circle from waypoint solver
+  %%need to be careful about which solution is grabbed, dont want the other side of the circle
+  %%this could all be done in world coordinates, which means waypointsolver center needs to be transformed through robots initial pose to the world
+  
   %need to get path compensation/error term 
-  %%desired x = r * cos (distance/r)
-  %%desired y = r * cos (distance/r)
+  %%desired x = r * cos (distance/r - pi/2)
+  %%desired y = r * sin (distance/r - pi/2) + r
+  %%  ^^ this is kind of the equation. actually need parameterized circle with distance=0 at robot's initial pose and center at the turn center
   %%%should be proportional to l1 norm of desired x,y and current x,y
+  
+  %should not need to estimate servo states?
 
    %switch setpoints if distance has been travelled
    if (linearRobotWithServoStates(1) > .95 * Distance && firstwaypointmet ==0) 
-    linearRobotWithServoSetpoint = -[0;0;Distance2;Radius2];
-    linearRobotWithServoStates = [0;Radius2;0;0];
+    linearRobotWithServoSetpoint = -[0;0;Distance2;Radius2;0];
+    linearRobotWithServoStates = [0;Radius2;0;0;0];
     firstwaypointmet =1;
    end
    
    dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + linearRobotWithServoSetpoint;
    linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
    
-   input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:4)*linearRobotWithServoStates(3:4);
+   input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:5)*linearRobotWithServoStates(3:5); %is the fifth state a servo state?
   SpeedInput = input(1);
   SteeringAccelInput = input(2);
   SteeringInput = linearRobotWithServoStates(2);
@@ -118,6 +148,12 @@ for t = time;
   end
   scatter(crumbs(1,1:crumbindex),crumbs(2,1:crumbindex));
   %plot waypoint
+  %plot(center1(1),center1(2),'*');
+  %plot(center2(1),center2(2),'*');
+  %plot(waypoint(1),waypoint(2),'g*');
+  
+  
+  
   hold off;
 
   %plot motor inputs
@@ -129,16 +165,16 @@ for t = time;
   
   %plot speed and steering
   subplot(2,2,3);
-  sscPlot(:,sscPlotindex) = [SpeedInput,SteeringInput];
+  sscPlot(:,sscPlotindex) = [SpeedInput,SteeringAccelInput];
   plot([0:dt:t],sscPlot(:,1:sscPlotindex));
-  legend('SpeedInput', 'SteeringInput');
+  legend('SpeedInput', 'SteeringAccelInput');
   sscPlotindex = sscPlotindex +1;
   
   %plot graph of servo states
   subplot(2,2,4);
   posPlot(:,posPlotindex) = [linearRobotWithServoStates(1:4)'];
   plot([0:dt:t], posPlot(1:2, 1:posPlotindex), '-', [0:dt:t], posPlot(3:4, 1:posPlotindex), '--');
-  legend('Distance', 'SteeringInput', 'SpeedServo', 'SteeringServo');
+  legend('Distance', 'TurnRadius', 'SpeedServo', 'RadiusServo');
   posPlotindex = posPlotindex+1; 
   
   
