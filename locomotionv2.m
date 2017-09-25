@@ -103,18 +103,78 @@ for t = time;
   
   %read back estimate of control states from robot states
   %get speed from l2 norm of dx and dy
-  speedEstimate = sqrt(drobotState(1)^2 + drobotState(2)^2);
-  %get distance along arc from start to point on arc closest to current position? <---- winner
-  %%this is also the point on the circle that is on the line through the center of the circle and the robots pos
-  %%need to get center of circle from waypoint solver
-  %%need to be careful about which solution is grabbed, dont want the other side of the circle
-  %%this could all be done in world coordinates, which means waypointsolver center needs to be transformed through robots initial pose to the world
+  speedEstimate = sqrt(drobotState(1)^2 + drobotState(2)^2); %do we actually need this?
   
+  %get distance along arc from start to point on arc closest to current position? <---- winner
+  %%this is also the point on the circlur path that is on the line through the center of the circle and the robots pos
+  %%need to get center of circle from waypoint solver - got it
+  %%care! need to be careful about which solution is grabbed, dont want the other side of the circle
+  %%this could all be done in world coordinates, which means waypointsolver center needs to be transformed through robots initial pose to the world
+  %thisLineEq: y - center1(2) = (center1(2) - robotState(2))/(center1(1) - robotState(1)) * (x - center1(1));
+  %pathEq: Radius^2 = (x - center1(1))^2 + (y - center1(2))^2;
+  %will be the solution that is closest to robot pose - this is the care!
+
   %need to get path compensation/error term 
   %%desired x = r * cos (distance/r - pi/2)
   %%desired y = r * sin (distance/r - pi/2) + r
   %%  ^^ this is kind of the equation. actually need parameterized circle with distance=0 at robot's initial pose and center at the turn center
   %%%should be proportional to l1 norm of desired x,y and current x,y
+  %%%also would be distance between closest path point and robot pose, as calculated above
+  
+  
+  
+  %get path compensation term first by finding nearest point on path and taking signed difference between robot pose and closest path point
+  %%nearest point on path is point on path that is on the line through the center of the circle and the robots pose that is closest to the robots pose.
+  %%%calculating path compensation term
+  %%care! need to be careful about which solution is grabbed, dont want the other side of the circle
+  %%this could all be done in world coordinates, which means waypointsolver center needs to be transformed through robots initial pose to the world
+  %thisLineEq: y - center1(2) = (center1(2) - robotState(2))/(center1(1) - robotState(1)) * (x - center1(1));
+  %pathEq: Radius^2 = (x - center1(1))^2 + (y - center1(2))^2;
+  %will be the solution that is closest to robot pose - this is the care!
+  if (firstwaypointmet ==0)
+    M = (center1(2) - robotState(2))/(center1(1) - robotState(1));
+    potXpa = (-(-2*center1(1) - 2*M^2*center1(1)) + sqrt((-2*center1(1) - 2*M^2*center1(1))^2 - 4*(1+M^2)*(center1(1)^2 - Radius^2 + M^2*center1(1)^2)))/(2*(1 + M^2));
+    potXpb = (-(-2*center1(1) - 2*M^2*center1(1)) - sqrt((-2*center1(1) - 2*M^2*center1(1))^2 - 4*(1+M^2)*(center1(1)^2 - Radius^2 + M^2*center1(1)^2)))/(2*(1 + M^2));
+    if (abs(robotState(1) - potXpa) < abs(robotState(1) - potXpb))
+     Xp = potXpa;
+    else
+     Xp = potXpb;
+    end
+    Yp = M*(Xp - center1(1)) + center1(2);
+
+  else
+    M = (center2(2) - robotState(2))/(center2(1) - robotState(1));
+    potXpa = (-(-2*center2(1) - 2*M^2*center2(1)) + sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
+    potXpb = (-(-2*center2(1) - 2*M^2*center2(1)) - sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
+    if (abs(robotState(1) - potXpa) < abs(robotState(1) - potXpb))
+     Xp = potXpa;
+    else
+     Xp = potXpb;
+    end
+    Yp = M*(Xp - center2(1)) + center2(2);
+
+  end
+  pathCompensationEstimate = (robotState(1) - Xp) + (robotState(2) - Yp); %probably, might want a log or something. need to be careful with oscilliations
+  
+  %get distance traveled from closest path point and back calculating distance travelled along arc
+  %Xp = r * cos(distance/r - pi/2)
+  %Yp = r * sin(distance/r - pi/2) +r
+    %%  ^^ this is kind of the equation. actually need parameterized circle with distance=0 at robot's initial pose and center at the turn center
+    %% i.e. it needs transformed if robot has turned first. Might be able to get some special case magic...
+    
+  %acos gives 0 to pi for 1 to -1
+  %asin gives pi/2 to -pi/2 for 1 to -1
+  %distance is arcangle * r, r is given
+  %arcangle is angle of closest point on circle - angle of startpoint on circle
+  %angle of startpoint on circle is -pi/2 for first jaunt and distance1/Radius1 - pi/2 for second jaunt
+  if (firstwaypointmet ==0)
+    %%need to be careful about which quadrant life is in, can test with xp and yp relative to xc and yc
+    %distanceTravelledEstimate
+  else
+    
+  end
+  
+  
   
   %should not need to estimate servo states?
 
