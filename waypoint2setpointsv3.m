@@ -146,7 +146,7 @@ if (xintercept>=0 && (y1 >0 &&theta >0 && theta <pi || y1<0 && theta <0 && theta
      firstradius = 100; %infinity
      
      xcenter = xtangent/2;
-     ycenter = radius; %positive or negative, doesnt matter because it is actually a straight line
+     ycenter = firstradius; %positive or negative, doesnt matter because it is actually a straight line
    
    end
    

@@ -6,7 +6,7 @@ fieldlength = 5;
 fieldwidth = 4;
 
 
-waypointRobotCoord = [4,1.5,pi/4];
+waypointRobotCoord = [4,1.5,pi/3];
 %works for intersection closer to start, circle as starting part, first quadrant?
 %implies intersection distance to start < intersection distance to end
 
