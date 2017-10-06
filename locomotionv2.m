@@ -30,7 +30,7 @@ center2 =  [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRob
 firstwaypointmet =0;
 
 dt = .01;
-time = 0:dt:3;
+time = 0:dt:1;
 
 wheelR = .3;
 AxelLen = .5;
@@ -63,17 +63,20 @@ mStatesPlotIndex = 1;
 %estimate of robot states from linear model
 linearRobotStateEstimate = [0;0;0];
 
-TurnCompensatorEffect = 5;
-TurnCompensatorGain = .3;
+TurnCompensatorEffect = 2;
+TurnCompensatorObservationGain = 6;
+TurnCompensatorInputGain = .2;
+TurnCompensatorEstimateDecay = -.6;
+turnCompensationMeasurementScale = 2;
 % a brief note on radius vs steering. Let the turn radius be the inverse of 
 %steering. So Radius = 1/Steering. So as Sterring -> 0, Radius -> +/- Inf
 
  linearRobotWithServoStates = [0;Radius;0;0;0]; %start with the Turn Radius in the right spot
  linearRobotWithServoA = [0,0,0,0,0; %integral of speedInput (distance)
-                          0,0,0,0,TurnCompensatorEffect; %integral of TurnRadiusAccel (turn radius)
+                          0,0,0,0,-TurnCompensatorEffect; %integral of TurnRadiusAccel (turn radius), to use compensation, 
                          1,0,0,0,0; %error between distance and distance setpoint
                          0,1,0,0,0; %error between TurnRadius and TurnRadius setpoint
-                         0,0,0,0,0] %path error/ turn compensation 
+                         0,0,0,0,TurnCompensatorEstimateDecay] %path error/ turn compensation 
                                           %truely:proportional to signed l1 norm
                                           %between current pos and closest point
                                           %on path, measured in Steering
@@ -82,11 +85,13 @@ TurnCompensatorGain = .3;
                                           %turn radius and the setRadius, and
                                           % decreases with time?
                                           %
+%strategy, inject turn compensation after speed steering/radius control
+% or, make speed steering/radius control work on its own
  linearRobotWithServoB = [1,0; %speed input
                           0,1; %steeringAccel
                           0,0; %no input to servo states
                           0,0; %no input to servo states
-                          0,1];%if you are doing steeringAccel, you are compensating
+                          0,TurnCompensatorInputGain];%if you are doing steeringAccel, you are compensating
  
 linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
  
@@ -95,8 +100,8 @@ linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
  linearRobotQ = [10,0,0,0,0;
                 0,10,0,0,0;
                 0,0,100,0,0;
-                0,0,0,1000,0
-                0,0,0,0,100];
+                0,0,0,10,0
+                0,0,0,0,10000];
   linearRobotR = [1,0;0,1];
   
   Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
@@ -108,7 +113,7 @@ linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
   %observerinput = eye(5);
   %observerinput(3:4,3:4) = 0;
   %ObserverGains = ppl(linearRobotWithServoA',observerinput', [-4,-3,-2,-1,-5])
-  ObserverGains = [.5,.5,0,0,TurnCompensatorGain]; %how much to weight the difference between estimated states and measured states
+  ObserverGains = [2,2,0,0,TurnCompensatorObservationGain]; %how much to weight the difference between estimated states and measured states
   %to make it a kalman-bucy filter, use lqr methods to make them proportional to the noise of each sensor
   Residual = [0;0;0;0;0]; %the unweighted difference between the estimated states and the measured states
   
@@ -192,8 +197,22 @@ for t = time;
     Yp = M*(Xp - center2(1)) + center2(2);
 
   end
-  pathCompensationEstimate = (robotState(1) - Xp) + (robotState(2) - Yp); %probably, might want a log or something. need to be careful with oscilliations
+  %pathCompensationEstimate = (robotState(1) - Xp) + (robotState(2) - Yp); %probably, might want a log or something. need to be careful with oscilliations
+  %pathCompensationEstimate = robotState(2) - ((-1/M) * (robotState(1) - Xp) + Yp); %robot's height above or below the instantaneous line of the path at Xp,Yp
+  %still probably not good enough, need something clearly defined for any slope. Like maybe distance inside or outside the radius of the turn?
+  %what about robots distance from the center - path's distance from the center? -< yess
   
+  %reminder that this is being measured in steering...
+  %this number will be negative if a larger turn radius is needed
+  %and positive if a smaller turn radius is needed. So subtract it.
+  
+  %must be "faster" then the servo trying to "fix" the turn radius at the set point
+  if (firstwaypointmet ==0)
+    pathCompensationEstimate = sqrt((center1(1) - robotState(1))^2 + (center1(2) - robotState(2))^2) - sqrt((center1(1) - Xp)^2 + (center1(2) - Yp)^2);
+  else
+    pathCompensationEstimate = sqrt((center2(1) - robotState(1))^2 + (center2(2) - robotState(2))^2) - sqrt((center2(1) - Xp)^2 + (center2(2) - Yp)^2);
+  end
+  pathCompensationEstimate = turnCompensationMeasurementScale*pathCompensationEstimate;
   %get distance traveled from closest path point and back calculating distance travelled along arc
   %Xp = r * cos(distance/r - pi/2)
   %Yp = r * sin(distance/r - pi/2) +r
@@ -238,7 +257,8 @@ for t = time;
    dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + ObserverGains * Residual +linearRobotWithServoSetpoint;
    linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
    
-   input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:5)*linearRobotWithServoStates(3:5); %is the fifth state a servo state?
+   %input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:5)*linearRobotWithServoStates(3:5); %is the fifth state a servo state?
+   input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:4)*linearRobotWithServoStates(3:4) - Kx(:,5) * linearRobotWithServoStates(5);
   SpeedInput = input(1);
   SteeringAccelInput = input(2);
   SteeringInput = linearRobotWithServoStates(2);
