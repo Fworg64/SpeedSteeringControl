@@ -54,28 +54,39 @@ Uplotindex=1;
 sscPlot = zeros(2,length(time));
 sscPlotindex=1;
 
-posPlot = zeros(4, length(time));
+posPlot = zeros(5, length(time));
 posPlotindex=1;
 
+%vecotr of measured states
+measuredStates = zeros(3,length(time));
+mStatesPlotIndex = 1;
+%estimate of robot states from linear model
 linearRobotStateEstimate = [0;0;0];
 
-%need to add path error/compensation term to control states
-%how to do this?
-%
+TurnCompensatorEffect = 5;
+TurnCompensatorGain = .3;
+% a brief note on radius vs steering. Let the turn radius be the inverse of 
+%steering. So Radius = 1/Steering. So as Sterring -> 0, Radius -> +/- Inf
 
- linearRobotWithServoStates = [0;Radius;0;0;0]; %start with the steering wheel in the right spot
+ linearRobotWithServoStates = [0;Radius;0;0;0]; %start with the Turn Radius in the right spot
  linearRobotWithServoA = [0,0,0,0,0; %integral of speedInput (distance)
-                          0,0,0,0,.2; %integral of steeringAccel (Steering)
+                          0,0,0,0,TurnCompensatorEffect; %integral of TurnRadiusAccel (turn radius)
                          1,0,0,0,0; %error between distance and distance setpoint
-                         0,1,0,0,0; %error between Steering and Steering setpoint
-                         0,0,0,0,-.2] %path error/ turn compensation (truely: l1 norm between current pos and closest point on path, 
-                                          %linearly: proportional to the difference between the current turn radius and the setpoint, but decreases with time?
-                                          %could be steeringAccel - itself (if you are changing the wheel you are fucked up)
+                         0,1,0,0,0; %error between TurnRadius and TurnRadius setpoint
+                         0,0,0,0,0] %path error/ turn compensation 
+                                          %truely:proportional to signed l1 norm
+                                          %between current pos and closest point
+                                          %on path, measured in Steering
+                                          %linear estimate: weakly proportional 
+                                          %to the difference between the current
+                                          %turn radius and the setRadius, and
+                                          % decreases with time?
+                                          %
  linearRobotWithServoB = [1,0; %speed input
                           0,1; %steeringAccel
                           0,0; %no input to servo states
                           0,0; %no input to servo states
-                          0,1];%if you are steering, you are compensating
+                          0,1];%if you are doing steeringAccel, you are compensating
  
 linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
  
@@ -91,6 +102,17 @@ linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
   Kx = lqr(linearRobotWithServoA, linearRobotWithServoB, linearRobotQ, linearRobotR)
   
   ServoRoots = eig(linearRobotWithServoA - linearRobotWithServoB*Kx)
+  
+  %pick observer gains, noise not yet characterized, so it is done by hand
+  %should use pole placement, investigate LQR methods
+  %observerinput = eye(5);
+  %observerinput(3:4,3:4) = 0;
+  %ObserverGains = ppl(linearRobotWithServoA',observerinput', [-4,-3,-2,-1,-5])
+  ObserverGains = [.5,.5,0,0,TurnCompensatorGain]; %how much to weight the difference between estimated states and measured states
+  %to make it a kalman-bucy filter, use lqr methods to make them proportional to the noise of each sensor
+  Residual = [0;0;0;0;0]; %the unweighted difference between the estimated states and the measured states
+  
+  ObserverRoots = eig(linearRobotWithServoA' -eye(5)'*ObserverGains')
 
 for t = time;
 
@@ -103,7 +125,15 @@ for t = time;
   
   %read back estimate of control states from robot states
   %get speed from l2 norm of dx and dy
-  speedEstimate = sqrt(drobotState(1)^2 + drobotState(2)^2); %do we actually need this?
+  %speedEstimate = sqrt(drobotState(1)^2 + drobotState(2)^2); %do we actually need this?
+  %need turn radius estimate
+  %rotational velocity = (rightwheelspeed - leftwheelspeed)/AxelLen
+  %turn radius:  R = AxelLen/2 * (Ur + Ul)/(Ur - Ul);
+  if (Ur - Ul ==0)
+    RadiusEstimate = 1;%100;
+  else
+    RadiusEstimate = AxelLen/2 * (Ur + Ul)/(Ur - Ul);
+  end
   
   %get distance along arc from start to point on arc closest to current position? <---- winner
   %%this is also the point on the circlur path that is on the line through the center of the circle and the robots pos
@@ -132,7 +162,11 @@ for t = time;
   %pathEq: Radius^2 = (x - center1(1))^2 + (y - center1(2))^2;
   %will be the solution that is closest to robot pose - this is the care!
   if (firstwaypointmet ==0)
-    M = (center1(2) - robotState(2))/(center1(1) - robotState(1));
+    if (center1(1) - robotState(1) ==0)
+      M = (center1(2) - robotState(2))/.001;
+    else
+      M = (center1(2) - robotState(2))/(center1(1) - robotState(1));
+    end
     potXpa = (-(-2*center1(1) - 2*M^2*center1(1)) + sqrt((-2*center1(1) - 2*M^2*center1(1))^2 - 4*(1+M^2)*(center1(1)^2 - Radius^2 + M^2*center1(1)^2)))/(2*(1 + M^2));
     potXpb = (-(-2*center1(1) - 2*M^2*center1(1)) - sqrt((-2*center1(1) - 2*M^2*center1(1))^2 - 4*(1+M^2)*(center1(1)^2 - Radius^2 + M^2*center1(1)^2)))/(2*(1 + M^2));
     if (abs(robotState(1) - potXpa) < abs(robotState(1) - potXpb))
@@ -143,7 +177,11 @@ for t = time;
     Yp = M*(Xp - center1(1)) + center1(2);
 
   else
-    M = (center2(2) - robotState(2))/(center2(1) - robotState(1));
+    if (center2(1) - robotState(1) ==0)
+     M = (center2(2) - robotState(2))/.001;
+    else
+     M = (center2(2) - robotState(2))/(center2(1) - robotState(1));
+    end
     potXpa = (-(-2*center2(1) - 2*M^2*center2(1)) + sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
     potXpb = (-(-2*center2(1) - 2*M^2*center2(1)) - sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
     if (abs(robotState(1) - potXpa) < abs(robotState(1) - potXpb))
@@ -169,9 +207,18 @@ for t = time;
   %angle of startpoint on circle is -pi/2 for first jaunt and distance1/Radius1 - pi/2 for second jaunt
   if (firstwaypointmet ==0)
     %%need to be careful about which quadrant life is in, can test with xp and yp relative to xc and yc
-    %distanceTravelledEstimate
+    %%only really need to know top half or bottom half
+    arcangle = (acos((Xp - center1(1))/Radius) - pi/2);
+    if (Yp > center1(2))
+      arcangle = arcangle + pi;
+    end
+    distanceTravelledEstimate = -Radius * arcangle;
   else
-    
+    arcangle = (asin((Xp - center2(1))/Radius2) - (Distance/Radius - pi/2));
+    if (Yp > center2(2))
+      arcangle = arcangle + pi;
+    end
+    distanceTravelledEstimate = -Radius2 * arcangle;
   end
   
   
@@ -179,13 +226,16 @@ for t = time;
   %should not need to estimate servo states?
 
    %switch setpoints if distance has been travelled
-   if (linearRobotWithServoStates(1) > .95 * Distance && firstwaypointmet ==0) 
-    linearRobotWithServoSetpoint = -[0;0;Distance2;Radius2;0];
-    linearRobotWithServoStates = [0;Radius2;0;0;0];
-    firstwaypointmet =1;
-   end
+   %if (linearRobotWithServoStates(1) > .95 * Distance && firstwaypointmet ==0) 
+   % linearRobotWithServoSetpoint = -[0;0;Distance2;Radius2;0];
+   % linearRobotWithServoStates = [0;Radius2;0;0;0];
+   % firstwaypointmet =1;
+   %end
    
-   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + linearRobotWithServoSetpoint;
+   %get residual
+   Residual = [distanceTravelledEstimate; RadiusEstimate; 0;0; pathCompensationEstimate] - linearRobotWithServoStates;
+   
+   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + ObserverGains * Residual +linearRobotWithServoSetpoint;
    linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
    
    input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:5)*linearRobotWithServoStates(3:5); %is the fifth state a servo state?
@@ -194,7 +244,7 @@ for t = time;
   SteeringInput = linearRobotWithServoStates(2);
     
   %plot robot
-  subplot(2,2,1);
+  subplot(3,2,1);
   hold on;
   robotdraw(robotState(1),robotState(2),robotState(3),linearRobotStateEstimate(1), linearRobotStateEstimate(2), linearRobotStateEstimate(3));
   %%plot path points
@@ -217,27 +267,34 @@ for t = time;
   hold off;
 
   %plot motor inputs
-  subplot(2,2,2);
+  subplot(3,2,2);
   Uplot(:,Uplotindex) = [Ul;Ur];
   plot([0:dt:t],Uplot(:,1:Uplotindex));
   legend('LeftWheel Speed', 'Right Wheel Speed');
   Uplotindex = Uplotindex+1;
   
   %plot speed and steering
-  subplot(2,2,3);
+  subplot(3,2,3);
   sscPlot(:,sscPlotindex) = [SpeedInput,SteeringAccelInput];
   plot([0:dt:t],sscPlot(:,1:sscPlotindex));
   legend('SpeedInput', 'SteeringAccelInput');
   sscPlotindex = sscPlotindex +1;
   
   %plot graph of servo states
-  subplot(2,2,4);
-  posPlot(:,posPlotindex) = [linearRobotWithServoStates(1:4)'];
-  plot([0:dt:t], posPlot(1:2, 1:posPlotindex), '-', [0:dt:t], posPlot(3:4, 1:posPlotindex), '--');
-  legend('Distance', 'TurnRadius', 'SpeedServo', 'RadiusServo');
+  subplot(3,2,4);
+  posPlot(:,posPlotindex) = [linearRobotWithServoStates(1:5)'];
+  plot([0:dt:t], posPlot(1:2, 1:posPlotindex), '-', [0:dt:t], posPlot(3:4, 1:posPlotindex), '--', [0:dt:t], posPlot(5,1:posPlotindex), '*');
+  legend('Distance', 'TurnRadius', 'SpeedServo', 'RadiusServo', 'TurnCompensator');
   posPlotindex = posPlotindex+1; 
+  
+  %plot graph of estimated states
+  subplot(3,2,5);
+  measuredStates(:,mStatesPlotIndex) = [distanceTravelledEstimate, RadiusEstimate, pathCompensationEstimate];
+  plot([0:dt:t], measuredStates(:,1:mStatesPlotIndex));
+  legend('distanceTravelledEstimate', 'RadiusEstimate', 'pathCompensationEstimate');
+  mStatesPlotIndex = mStatesPlotIndex +1;
   
   
 end
-subplot(2,2,1);
+subplot(3,2,1);
 robotdraw(robotState(1),robotState(2),robotState(3), linearRobotStateEstimate(1), linearRobotStateEstimate(2), linearRobotStateEstimate(3)); %needed to hold last frame
