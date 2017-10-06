@@ -117,7 +117,7 @@ linearRobotWithServoSetpoint = -[0;0;Distance;Radius;0];
   %to make it a kalman-bucy filter, use lqr methods to make them proportional to the noise of each sensor
   Residual = [0;0;0;0;0]; %the unweighted difference between the estimated states and the measured states
   
-  ObserverRoots = eig(linearRobotWithServoA' -eye(5)'*ObserverGains')
+  %ObserverRoots = eig(linearRobotWithServoA' -eye(5)'*ObserverGains')
 
 for t = time;
 
