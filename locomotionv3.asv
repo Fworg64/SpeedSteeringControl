@@ -316,9 +316,9 @@ for t = time;
   %plot measured states
   subplot(2,2,4);
   measuredStatesPlot(:,mStatesPlotIndex) = measuredRobotState(3:6);
-  derivOfEst4Plot(d4PlotIndex) = derivOfEst4;
-  plot([0:dt:t], measuredStatesPlot(:,1:mStatesPlotIndex), [0:dt:t], 10*derivOfEst4Plot(1:d4PlotIndex));
-  legend('Steering Correction CW', 'Path Error Term', 'Distance to goal', 'Distance to closest point','10xDerivOfEst4');
+  derivOfEst4Plot(d4Plotindex) = derivOfEst4;
+  plot([0:dt:t], measuredStatesPlot(:,1:mStatesPlotIndex), [0:dt:t], derivOfEst4Plot(1:d4PlotIndex));
+  legend('Steering Correction CW', 'Path Error Term', 'Distance to goal', 'Distance to closest point','DerivOfEst4');
   mStatesPlotIndex = mStatesPlotIndex +1;
   d4PlotIndex = d4PlotIndex +1;
   title('Measured States');
