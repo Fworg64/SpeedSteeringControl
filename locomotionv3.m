@@ -111,8 +111,8 @@ linearRobotA = [-2,0,-.002,-.05,-120,0,0,-1; %left wheel speed
             
 linearRobotB = [1;1;0;0;0;0;0;0];
 
- linearRobotQ = [10,0,0,0,0,0,0,0; %weighting for lqr gains
-                0,10,0,0,0,0,0,0;
+ linearRobotQ = [40,0,0,0,0,0,0,0; %weighting for lqr gains
+                0,40,0,0,0,0,0,0;
                 0,0,1,0,0,0,0,0;
                 0,0,0,10,0,0,0,0;
                 0,0,0,0,10,0,0,0;
@@ -291,15 +291,11 @@ for t = time;
   burstwidth = .1;
   burstspace =.5;
   
-  if (t<burstspace * burstindex + burstwidth)
-      U=5;
+  if (sin(2*pi*t/burstwidth) > .2)
+      U = 5;
   else
       U=0;
-  end;
-  
-    if (t > burstspace * burstindex - 2*burstwidth)
-        burstindex = burstindex+1;
-    end
+  end
   
      %switch setpoints if distance has been travelled
    if ( t > .2 && measuredRobotState(5) < .05 && firstwaypointmet ==0) 
