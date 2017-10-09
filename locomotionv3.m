@@ -26,7 +26,7 @@ derivOfEst4 =0;
 
 U=0;
 
-waypoint = [4;1;pi/4] %world coordinates
+waypoint = [4;1;;pi/4] %world coordinates
 %transform waypoint to robot coordinates
 waypointTrans = waypoint - InitialRobotState;
 waypointRot = [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRobotState(3)),cos(InitialRobotState(3))] *  [waypointTrans(1);waypointTrans(2)];
@@ -77,8 +77,8 @@ posPlotindex=1;
 %d4PlotIndex=1;
 
 %states are
-linearRobotA = [-2,0,-.002,-.05,-120,0,0,-1; %left wheel speed
-                0,-2,.002,.05,120,0,0,1; %right wheel speed
+linearRobotA = [-2,0,-.07,-.2,-120,0,0,-1; %left wheel speed
+                0,-2,.07,.2,120,0,0,1; %right wheel speed
                 0,0,-100,8,0,0,0,0; %steering correction
                 .1,-.1,0,-.8,0,0,0,0; %path error
                 0,0,0,0,-.3,0,0,0; %derivitive of path error
@@ -288,11 +288,11 @@ for t = time;
   %end
   %U = 3*(robotStateEstimate(6) - 10*robotStateEstimate(5))
   
-  burstwidth = .1;
+  burstwidth = .05;
   burstspace =.5;
   
   if (sin(2*pi*t/burstwidth) > .2)
-      U = 5;
+      U = 10;
   else
       U=0;
   end
