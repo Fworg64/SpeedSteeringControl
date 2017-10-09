@@ -9,12 +9,17 @@
 %modify speed based on difference... maybe through it into path
 %compensation term?
 %or should it be its own state?
+%angle of robot with respect to path as a seperate state <---=|
+%something with theta and the center of the circle and the xp,yp
+%paththeta = atan2(yp - center(2),xp - center(1))
+%robottheta = theta
+%need to add derivitive of this state too for stability
 
 InitialRobotState = [1;0;0]; %x,y,theta
 robotPhysicalPose = InitialRobotState; %x,y,theta used in graph
-robotStateEstimate = [0;0;0;0;0;0;0]; 
+robotStateEstimate = [0;0;0;0;0;0;0;0]; 
 measuredRobotState = robotStateEstimate; %for now;
-trueRobotState = [0;0;0;0;0;0];
+trueRobotState = [0;0;0;0;0;0;0];
 prevMeasuredRobotState5 =0;
 prevRobotStateEstimate4 =0;
 derivOfEst4 =0;
@@ -43,6 +48,7 @@ center2 = [xcenter2UT; ycenter2UT]+ [InitialRobotState(1);InitialRobotState(2)];
 center2 =  [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRobotState(3)),cos(InitialRobotState(3))] * [center2(1);center2(2)]
 
 firstwaypointmet =0;
+burstindex=0;
 pertubationDistance = .05; %leash length
 
 dt = .01;
@@ -61,23 +67,24 @@ crumbperiod =20;
 crumbindex=0;
 crumbs = zeros(2,int32(length(time)/crumbperiod));
 
-Uplot = zeros(2,length(time));
+Uplot = zeros(3,length(time));
 Uplotindex=1;
-measuredStatesPlot = zeros(5,length(time));
+measuredStatesPlot = zeros(6,length(time));
 mStatesPlotIndex =1;
-posPlot = zeros(5, length(time));
+posPlot = zeros(6, length(time));
 posPlotindex=1;
-derivOfEst4Plot = zeros(1,length(time));
-d4PlotIndex=1;
+%derivOfEst4Plot = zeros(1,length(time));
+%d4PlotIndex=1;
 
 %states are
-linearRobotA = [-.2,0,-.002,-.05,-240,0,0; %left wheel speed
-                0,-.2,.002,.05,240,0,0; %right wheel speed
-                0,0,-10,8,-10,0,0; %steering correction
-                .1,-.1,0,-.8,0,0,0; %path error
-                0,0,0,0,-.3,0,0; %derivitive of path error
-                -.005,-.005,0,0,0,-.2,0; % distance from closest point on path to goal
-                -.005,-.005,0,0,0,0,-.2]; %distance to closest point on path
+linearRobotA = [-2,0,-.002,-.05,-120,0,0,-1; %left wheel speed
+                0,-2,.002,.05,120,0,0,1; %right wheel speed
+                0,0,-100,8,0,0,0,0; %steering correction
+                .1,-.1,0,-.8,0,0,0,0; %path error
+                0,0,0,0,-.3,0,0,0; %derivitive of path error
+                -.005,-.005,0,0,0,-.2,0,0; % distance from closest point on path to goal
+                -.005,-.005,0,0,0,0,-.2,0; %distance to closest point on path
+                0,0,0,0,0,0,0,-.2];
             %leftwheel speed has friction, accepts steering input, and gets
             %regular input
             %rightwheel speed has friction, accepts steering input, and
@@ -102,15 +109,16 @@ linearRobotA = [-.2,0,-.002,-.05,-240,0,0; %left wheel speed
             %%must ultimatly shoot past the goal
             
             
-linearRobotB = [1;1;0;0;0;0;0];
+linearRobotB = [1;1;0;0;0;0;0;0];
 
- linearRobotQ = [10,0,0,0,0,0,0; %weighting for lqr gains
-                0,10,0,0,0,0,0;
-                0,0,1,0,0,0,0;
-                0,0,0,10,0,0,0;
-                0,0,0,0,10,0,0;
-                0,0,0,0,0,10000,0;
-                0,0,0,0,0,0,1];
+ linearRobotQ = [10,0,0,0,0,0,0,0; %weighting for lqr gains
+                0,10,0,0,0,0,0,0;
+                0,0,1,0,0,0,0,0;
+                0,0,0,10,0,0,0,0;
+                0,0,0,0,10,0,0,0;
+                0,0,0,0,0,10000,0,0;
+                0,0,0,0,0,0,1,0
+                0,0,0,0,0,0,0,1];
 linearRobotR = 1;
 PlantRoots = eig(linearRobotA)
 %Kx = lqr(linearRobotA, linearRobotB, linearRobotQ, linearRobotR)
@@ -118,8 +126,8 @@ PlantRoots = eig(linearRobotA)
 %LQRRoots = eig(linearRobotA - linearRobotB * Kx)
 %pick observer gains
 %to make it a kalman-bucy filter, use lqr methods to make them proportional to the noise of each sensor
-ObserverGains = [1;1;6;8;6;1;1];
-Residual = [0;0;0;0;0;0]; %the unweighted difference between the estimated states and the measured states
+ObserverGains = [1;1;6;8;6;1;1;6];
+Residual = [0;0;0;0;0;0;0;0]; %the unweighted difference between the estimated states and the measured states
 
 for t = time;
     dRobotState = robotdynamics(trueRobotState(1),trueRobotState(2), robotPhysicalPose(3), dt, wheelR, AxelLen);
@@ -256,6 +264,11 @@ for t = time;
   
   
   measuredRobotState(7) = sqrt((robotPhysicalPose(1) - Xp)^2 + (robotPhysicalPose(2) - Yp)^2);
+  if (firstwaypointmet ==0)
+    measuredRobotState(8) = atan2(Yp - center1(2),Xp - center1(1)) - robotPhysicalPose(3) + pi/2;
+  else
+    measuredRobotState(8) = atan2(Yp - center2(2),Xp - center2(1)) - robotPhysicalPose(3) +pi/2;
+  end
   
   %get Residual after measureing states
   Residual = measuredRobotState - robotStateEstimate;
@@ -275,11 +288,18 @@ for t = time;
   %end
   %U = 3*(robotStateEstimate(6) - 10*robotStateEstimate(5))
   
-  if (t<.5)
-      U=10;
+  burstwidth = .1;
+  burstspace =.5;
+  
+  if (t<burstspace * burstindex + burstwidth)
+      U=5;
   else
       U=0;
   end;
+  
+    if (t > burstspace * burstindex - 2*burstwidth)
+        burstindex = burstindex+1;
+    end
   
      %switch setpoints if distance has been travelled
    if ( t > .2 && measuredRobotState(5) < .05 && firstwaypointmet ==0) 
@@ -316,27 +336,27 @@ for t = time;
   hold off;
     %plot motor inputs
   subplot(2,2,2);
-  Uplot(:,Uplotindex) = [trueRobotState(1);trueRobotState(2)];
+  Uplot(:,Uplotindex) = [U;trueRobotState(1);trueRobotState(2)];
   plot([0:dt:t],Uplot(:,1:Uplotindex));
-  legend('LeftWheel Speed', 'Right Wheel Speed');
+  legend('Gas', 'LeftWheel Speed', 'Right Wheel Speed');
   Uplotindex = Uplotindex+1;
   
   %plot estimated states, minus inputs
     subplot(2,2,3);
-  posPlot(:,posPlotindex) = [robotStateEstimate(3:7)'];
-  plot([0:dt:t], posPlot(1:3, 1:posPlotindex), '-', [0:dt:t], posPlot(4:5, 1:posPlotindex), '--');
-  legend('Steering Correction CW', 'Path Error Term', 'Estimated Deriv of Perror','Distance to goal', 'Distance to closest point');
+  posPlot(:,posPlotindex) = [robotStateEstimate(3:8)'];
+  plot([0:dt:t], posPlot(1:3, 1:posPlotindex), '-', [0:dt:t], posPlot(4:6, 1:posPlotindex), '--');
+  legend('Steering Correction CW', 'Path Error Term', 'Estimated Deriv of Perror','Distance to goal', 'Distance to closest point','Estimated Angle Diff');
   posPlotindex = posPlotindex+1; 
   title('Estimated States');
   
   %plot measured states
   subplot(2,2,4);
-  measuredStatesPlot(:,mStatesPlotIndex) = measuredRobotState(3:7);
-  derivOfEst4Plot(d4PlotIndex) = derivOfEst4;
-  plot([0:dt:t], measuredStatesPlot(:,1:mStatesPlotIndex), [0:dt:t], 10*derivOfEst4Plot(1:d4PlotIndex));
-  legend('Steering Correction CW', 'Path Error Term', '10xDerivOfEst4', 'Distance to goal', 'Distance to closest point');
+  measuredStatesPlot(:,mStatesPlotIndex) = measuredRobotState(3:8);
+  %derivOfEst4Plot(d4PlotIndex) = derivOfEst4;
+  plot([0:dt:t], measuredStatesPlot(:,1:mStatesPlotIndex));
+  legend('Steering Correction CW', 'Path Error Term', '10xDerivOfEst4', 'Distance to goal', 'Distance to closest point', 'Measured Angle Diff');
   mStatesPlotIndex = mStatesPlotIndex +1;
-  d4PlotIndex = d4PlotIndex +1;
+  %d4PlotIndex = d4PlotIndex +1;
   title('Measured States');
   
 end
