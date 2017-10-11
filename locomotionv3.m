@@ -2,18 +2,12 @@
 %this script demonstrates the control system that will be used on the NDSU
 %NRMC Robot for 2017/2018
 
-%derivitive of path error?
-%turn radius compensation term
-%calculate turn radius, take it in as ameasured state
-%compare it to the set turn radius
-%modify speed based on difference... maybe through it into path
-%compensation term?
-%or should it be its own state?
 %angle of robot with respect to path as a seperate state <---=|
 %something with theta and the center of the circle and the xp,yp
 %paththeta = atan2(yp - center(2),xp - center(1))
 %robottheta = theta
 %need to add derivitive of this state too for stability
+%angle setpoint is changing, need to add integral of angle error as well
 
 InitialRobotState = [1;0;0]; %x,y,theta
 robotPhysicalPose = InitialRobotState; %x,y,theta used in graph
@@ -25,7 +19,11 @@ prevRobotStateEstimate4 =0;
 derivOfEst4 =0;
 
 U=0;
+burstwidth = .2; %period of burst
+burstspace =.4; %height of sine
+stepheight = 5;
 
+  
 waypoint = [4;1;;pi/4] %world coordinates
 %transform waypoint to robot coordinates
 waypointTrans = waypoint - InitialRobotState;
@@ -49,17 +47,13 @@ center2 =  [cos(InitialRobotState(3)), sin(InitialRobotState(3));-sin(InitialRob
 
 firstwaypointmet =0;
 burstindex=0;
-pertubationDistance = .05; %leash length
+%pertubationDistance = .05; %leash length
 
 dt = .01;
-time = 0:dt:10;
+time = 0:dt:25;
 
 wheelR = .3;
 AxelLen = .5;
-
-SpeedInput = 0;
-SteeringInput = 0;
-SteeringAccelInput=0;
 
 %plotting records
 crumbcounter = 21;
@@ -77,8 +71,8 @@ posPlotindex=1;
 %d4PlotIndex=1;
 
 %states are
-linearRobotA = [-2,0,-.07,-.2,-120,0,0,-1; %left wheel speed
-                0,-2,.07,.2,120,0,0,1; %right wheel speed
+linearRobotA = [-2,0,-.06,-.03,-120,0,0,-1; %left wheel speed
+                0,-2,.06,.03,120,0,0,1; %right wheel speed
                 0,0,-100,8,0,0,0,0; %steering correction
                 .1,-.1,0,-.8,0,0,0,0; %path error
                 0,0,0,0,-.3,0,0,0; %derivitive of path error
@@ -126,7 +120,7 @@ PlantRoots = eig(linearRobotA)
 %LQRRoots = eig(linearRobotA - linearRobotB * Kx)
 %pick observer gains
 %to make it a kalman-bucy filter, use lqr methods to make them proportional to the noise of each sensor
-ObserverGains = [1;1;6;8;6;1;1;6];
+ObserverGains = [1;1;6;8;6;7;7;6];
 Residual = [0;0;0;0;0;0;0;0]; %the unweighted difference between the estimated states and the measured states
 
 for t = time;
@@ -234,33 +228,26 @@ for t = time;
   %arcangle is angle of closest point on circle - angle of startpoint on circle
   %angle of startpoint on circle is -pi/2 for first jaunt and distance1/Radius1 - pi/2 for second jaunt
   if (firstwaypointmet ==0)
-    %%need to be careful about which quadrant life is in, can test with xp and yp relative to xc and yc
-    %%only really need to know top half or bottom half
+    %this is not quite working
     arcangle = (acos((Xp - center1(1))/Radius) - pi/2);
-    %want to perturb angle such that pertubationangle*radius = Xcm
-    %so pertubationangle = Xcm/radius;
-    %%%pertubationangle = pertubationDistance/Radius;
-    %%%arcangle = arcangle + pertubationangle;
     if (Yp > center1(2))
       arcangle = arcangle + pi;
     end
     distanceTravelledEstimate = -Radius * arcangle;
-    measuredRobotState(6) = Distance - distanceTravelledEstimate + pertubationDistance;
+    measuredRobotState(6) = Distance + distanceTravelledEstimate;% + pertubationDistance;
   else
     arcangle = (asin((Xp - center2(1))/Radius2) - (Distance/Radius - pi/2));
-    %%pertubationangle = pertubationDistance/Radius2;
-    %%arcangle = arcangle + pertubationangle;
     if (Yp > center2(2))
       arcangle = arcangle + pi;
     end
     distanceTravelledEstimate = -Radius2 * arcangle;
-    measuredRobotState(6) = Distance2 - distanceTravelledEstimate + pertubationDistance;
+    measuredRobotState(6) = Distance2 + distanceTravelledEstimate;% + pertubationDistance;
   end
   
   %never let distance to goal increase
-  if (measuredRobotState(6) > prevMeasuredRobotState5)
-      measuredRobotState(6) = prevMeasuredRobotState5;
-  end
+  %if (measuredRobotState(6) > prevMeasuredRobotState5)
+  %    measuredRobotState(6) = prevMeasuredRobotState5;
+  %end
   
   
   measuredRobotState(7) = sqrt((robotPhysicalPose(1) - Xp)^2 + (robotPhysicalPose(2) - Yp)^2);
@@ -288,15 +275,13 @@ for t = time;
   %end
   %U = 3*(robotStateEstimate(6) - 10*robotStateEstimate(5))
   
-  burstwidth = .05;
-  burstspace =.5;
-  
-  if (sin(2*pi*t/burstwidth) > .2)
-      U = 10;
+
+  if (sin(2*pi*t/burstwidth) > burstspace)
+      U = stepheight;
   else
       U=0;
   end
-  
+
      %switch setpoints if distance has been travelled
    if ( t > .2 && measuredRobotState(5) < .05 && firstwaypointmet ==0) 
     firstwaypointmet =1;
