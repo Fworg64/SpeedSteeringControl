@@ -47,23 +47,23 @@ EPpDecay = -.1;
 EPiDecay = -.1;
 EPkA = 1; ETkA = 1;
 ETpDecay = -.1;
-ETiDecay = -.1;
+ETiDecay = .01;
 AcDecay = -.4;
 AcKe = -.1;
 SpeedErrorDecay = -.5;
 EPdDecay = -.2;
 
 numstates = 10
-A = [wheeldecay, 0, k1, k2, k3, k4, k5, kA,-Ke, 0;%leftwheel
-     0,wheeldecay, -k1,-k2,-k3,-k4,-k5, kA, 0,-Ke;%rightwheel
-     0,0,     EPpDecay,  0,  0,  0,  0,EPkA,0,  0;%EPp
-     0,0,1,   EPiDecay,  0,  0,  0,  0,  0,  0;%EPi
-     0,0,0,          0,  EPdDecay,  0,  0,  0,  0,   0;%EPd
-     0,0,0,          0,  0, ETpDecay, 0,ETkA,0,  0;%ETp
-     0,0,0,          0,  0,  1,  ETiDecay,  0,  0,  0;%ETi
-     0,0,0,          0,  0,  0, 0,AcDecay,AcKe,  AcKe;%(Ac)celleration
-     1,0,0,          0,  0,  0,      0, 0,  SpeedErrorDecay,  0;%left wheel speed error
-     0,1,0,          0,  0,    0,    0, 0,  0,  SpeedErrorDecay];%right wheel speed error
+A = [wheeldecay, 0, k1, k2, k3, k4, k5, kA,-Ke, 0;%leftwheel (1)
+     0,wheeldecay, -k1,-k2,-k3,-k4,-k5, kA, 0,-Ke;%rightwheel (2)
+     0,0,     EPpDecay,  0,  0,  0,  0,EPkA,0,  0;%EPp (3)
+     0,0,1,   EPiDecay,  0,  0,  0,  0,  0,  0;%EPi (4)
+     0,0,0,          0,  EPdDecay,  0,  0,  0,  0,   0;%EPd (5)
+     0,0,0,          0,  0, ETpDecay, 0,ETkA,0,  0;%ETp (6)
+     0,0,0,          0,  0,  1,  ETiDecay,  0,  0,  0;%ETi (7)
+     0,0,0,          0,  0,  0, 0,AcDecay,AcKe,  AcKe;%(Ac)celleration (8)
+     1,0,0,          0,  0,  0,      0, 0,  SpeedErrorDecay,  0;%left wheel speed error (9)
+     0,1,0,          0,  0,    0,    0, 0,  0,  SpeedErrorDecay];%right wheel speed error (10)
      
 Ref = zeros(10,1);
 Ref (9) = .3; %m/s for the left wheel
@@ -74,6 +74,9 @@ eig(A)
 B = zeros(10,2);
 B(1,1) = 1; B(2,1) = -1;
 B(8,2) = 1;
+%input affecting error derivitive
+B(5,1) = -.1;B(5,2) = .1;
+
 
 Q = eye(10);
 R = eye(2);
@@ -90,16 +93,31 @@ Xplot = zeros(length(X),length(time));
 Uplot = zeros(length(U),length(time));
 
 XplotIndex =1;
+
+plotperiod = 5;
+plotindex=1;
 figure();
 for t = time;
      dX = A*X - Ref +B*U;
      X = X + dX*dt;
-     U =[0;0];
-     %U = -Kx*X;
+     %U =[0;0];
+     U = -Kx*X;
+     
+     %get sensor measurements
+     
+     %get residual between state outputs and sensor measurements
+     
+     %gains for residual
+     
+     
+     %plug wheel velocity commands into vesc
+     %simulate robot
+     %draw robots path through time?
      
      Xplot(:,XplotIndex) = X;
      Uplot(:,XplotIndex) = U;
-     if (t>15)
+     if (t> plotperiod * plotindex)
+         plotindex = plotindex+1;
               subplot(2,2,1);
          plot([0:dt:t], Xplot(1:2,1:XplotIndex), [0:dt:t],Uplot(:,1:XplotIndex), '--');
          legend('Left Wheel Speed','Right Wheel Speed','Speed Input', 'Steering Input' );

@@ -35,7 +35,9 @@
 %right wheel speed error I
 
 
-
+%%notes
+%No input leads to diverging wheel steady state
+%Input with LQR leads to steady state wheel vel below set point
 
 wheeldecay = -.1;
 k1 = .1; k2 = .02; k3 = -5; %EP  P I D
@@ -46,20 +48,22 @@ EPiDecay = -.1;
 EPkA = 1; ETkA = 1;
 ETpDecay = -.1;
 ETiDecay = -.1;
+ETiiDecay = -.1;
 AcDecay = -.4;
 AcKe = -.1;
 SpeedErrorDecay = -.5;
 EPdDecay = -.2;
 
 numstates = 10
-A = [wheeldecay, 0, k1, k2, k3, k4, k5, kA,-Ke, 0;%leftwheel
-     0,wheeldecay, -k1,-k2,-k3,-k4,-k5, kA, 0,-Ke;%rightwheel
-     0,0,     EPpDecay,  0,  0,  0,  0,EPkA,0,  0;%EPp
-     0,0,1,   EPiDecay,  0,  0,  0,  0,  0,  0;%EPi
-     0,0,0,          0,  EPdDecay,  0,  0,  0,  0,   0;%EPd
-     0,0,0,          0,  0, ETpDecay, 0,ETkA,0,  0;%ETp
-     0,0,0,          0,  0,  1,  ETiDecay,  0,  0,  0;%ETi
-     0,0,0,          0,  0,  0, 0,AcDecay,AcKe,  0;%(Ac)celleration
+A = [wheeldecay, 0, k1, k2, k3, k4, k5, kA,-Ke, 0;%leftwheel (1)
+     0,wheeldecay, -k1,-k2,-k3,-k4,-k5, kA, 0,-Ke;%rightwheel (2)
+     0,0,     EPpDecay,  0,  0,  0,  0,EPkA,0,  0;%EPp (3)
+     0,0,1,   EPiDecay,  0,  0,  0,  0,  0,  0;%EPi (4)
+     0,0,0,          0,  EPdDecay,  0,  0,  0,  0,   0;%EPd (5)
+     0,0,0,          0,  0, ETpDecay, 0,ETkA,0,  0;%ETp (6)
+     0,0,0,          0,  0,  1,  ETiDecay,  0,  0,  0;%ETi (7)
+     0,0,0,          0,  0,  0, 0,  ETiiDecay,  0,  0;%ETii (8)
+     0,0,0,          0,  0,  0, 0,AcDecay,AcKe,  AcKe;%(Ac)celleration 
      1,0,0,          0,  0,  0,      0, 0,  SpeedErrorDecay,  0;%left wheel speed error
      0,1,0,          0,  0,    0,    0, 0,  0,  SpeedErrorDecay];%right wheel speed error
      
@@ -92,7 +96,8 @@ figure();
 for t = time;
      dX = A*X - Ref +B*U;
      X = X + dX*dt;
-     U =0;% -Kx*X;
+     U =[0;0];
+     %U = -Kx*X;
      
      Xplot(:,XplotIndex) = X;
      Uplot(:,XplotIndex) = U;
