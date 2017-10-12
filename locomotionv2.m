@@ -187,8 +187,8 @@ for t = time;
     else
      M = (center2(2) - robotState(2))/(center2(1) - robotState(1));
     end
-    potXpa = (-(-2*center2(1) - 2*M^2*center2(1)) + sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
-    potXpb = (-(-2*center2(1) - 2*M^2*center2(1)) - sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
+    potXpa = (-(-2*center2(1) - 2*M^2*center2(1)) + sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius2^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
+    potXpb = (-(-2*center2(1) - 2*M^2*center2(1)) - sqrt((-2*center2(1) - 2*M^2*center2(1))^2 - 4*(1+M^2)*(center2(1)^2 - Radius2^2 + M^2*center2(1)^2)))/(2*(1 + M^2));
     if (abs(robotState(1) - potXpa) < abs(robotState(1) - potXpb))
      Xp = potXpa;
     else
@@ -254,7 +254,7 @@ for t = time;
    %get residual
    Residual = [distanceTravelledEstimate; RadiusEstimate; 0;0; pathCompensationEstimate] - linearRobotWithServoStates;
    
-   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + ObserverGains * Residual +linearRobotWithServoSetpoint;
+   dlinearRobotWithServo = linearRobotWithServoA * linearRobotWithServoStates + linearRobotWithServoB * [SpeedInput;SteeringAccelInput] + ObserverGains' .* Residual +linearRobotWithServoSetpoint;
    linearRobotWithServoStates = linearRobotWithServoStates + dlinearRobotWithServo*dt;
    
    %input = -Kx(:,1:2)*linearRobotWithServoStates(1:2) - Kx(:,3:5)*linearRobotWithServoStates(3:5); %is the fifth state a servo state?
