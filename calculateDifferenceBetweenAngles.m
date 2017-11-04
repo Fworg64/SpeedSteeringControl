@@ -4,7 +4,7 @@ function [difference] =  calculateDifferenceBetweenAngles( firstAngle, secondAng
     while (mydifference < -pi) 
         mydifference =mydifference + 2*pi;
     end
-    while (mydifference > 180) 
+    while (mydifference > pi) 
         mydifference =mydifference - 2*pi;
     end
 

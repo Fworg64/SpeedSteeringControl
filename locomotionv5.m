@@ -18,16 +18,15 @@ time = 0:dt:40;
 robotPose = [1;0;0]; %x,y,theta
 
 VescGains = [-8];
-
+%control gains
 EPpGain = .02;
 EPdGain = .16;
 ETpGain = .0005;
 ETdGain  =.0040;
-WheelSpeedPGain = .018;
-
 EPpLowPassGain = .01;
 ETpLowPassGain = .01;
-
+WheelSpeedPGain = .018;
+%control states
 EPpLowPass=0;
 EPpLowPassPrev =0;
 ETpLowPass=0;
@@ -43,11 +42,11 @@ ErrorDerivPlot = zeros(2,length(time));
 plotIndex=0;
 plotPeriod = .5;
 plotCounter =1;
-figure();
+%figure();
 
 wheelDisturbance = ones(2,length(time));
-wheelDisturbance(1,1000:1300) = .1;
-wheelDisturbance(2,2500:3000) = .1;
+%wheelDisturbance(1,1000:1300) = .1;
+%wheelDisturbance(2,2500:3000) = .1;
 
 for t=time
      LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt)*wheelDisturbance(1,int16(t/dt)+1);
@@ -55,7 +54,7 @@ for t=time
      dRobot = robotdynamics(LwheelSpeed,RwheelSpeed, robotPose(3), dt, wheelR, AxelLen);
      robotPose = robotPose + dRobot;
      
-     measuredRobotPose = robotPose + .1*rand(3,1);
+     measuredRobotPose = robotPose;% + [normrnd(0,.02);normrnd(0,.02);normrnd(0,.02)];
      [CPPx,CPPy,CPPth] = findCPP(measuredRobotPose(1), measuredRobotPose(2), center(1), center(2), Radius);
      EPpEst = Radius - sqrt((center(1) - measuredRobotPose(1))^2 + (center(2) - measuredRobotPose(2))^2); %positive error means turn right, assume robot is pointing the correct direction
      ETpEst = calculateDifferenceBetweenAngles(measuredRobotPose(3),CPPth); %be careful with difference in angles here pi=0;
