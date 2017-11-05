@@ -1,5 +1,5 @@
 %locomotionv5
-
+figure();
 %control robot
 
 Radius = 1.5;
@@ -13,16 +13,16 @@ RvelCmd = RightWheelSetSpeed;
 LwheelSpeed =0;
 RwheelSpeed =0;
 dt=.01;
-time = 0:dt:40;
+time = 0:dt:60;
 
 robotPose = [1;0;0]; %x,y,theta
 
 VescGains = [-8];
 %control gains
 EPpGain = .02;
-EPdGain = .16;
-ETpGain = .0005;
-ETdGain  =.0040;
+EPdGain = .24;
+ETpGain = .0010;
+ETdGain  =.0060;
 EPpLowPassGain = .01;
 ETpLowPassGain = .01;
 WheelSpeedPGain = .018;
@@ -40,7 +40,7 @@ pathErrorPlot = zeros(2,length(time));
 pathErrorFiltPlot = zeros(2,length(time));
 ErrorDerivPlot = zeros(2,length(time));
 plotIndex=0;
-plotPeriod = .5;
+plotPeriod = 2;
 plotCounter =1;
 %figure();
 
@@ -92,15 +92,25 @@ for t=time
      if (t>plotCounter*plotPeriod)
          plotCounter = plotCounter+1; 
          subplot(2,2,1);
-         %hold on;
+         hold on;
+         rectangle('Position',[center(1)-Radius center(2)-Radius 2*Radius 2*Radius],'Curvature',[1,1]);
          robotdraw(robotPose(1),robotPose(2),robotPose(3),0,0,0);
          %hold off;
+         title('Robot Tracing 3m Diameter Circle from (1,0)');xlabel('X Distance (m)');ylabel('Y Distance (m)');
          subplot(2,2,2);
          plot([0:dt:t], wheelSpeedsPlot(:,1:plotIndex), '-', [0:dt:t], wheelCmdsPlot(:,1:plotIndex), '--')
          legend('Left Wheel Speed', 'Right Wheel Speed', 'Left Wheel Cmd', 'Right Wheel Cmd');
+         title('Wheel Speeds'); xlabel('Time (s)');ylabel('Velocity (m/s)');
          subplot(2,2,3);
-         plot([0:dt:t], pathErrorPlot(:,1:plotIndex),'-', [0:dt:t], pathErrorFiltPlot(:,1:plotIndex),'*',[0:dt:t], ErrorDerivPlot(:,1:plotIndex),'--');
-         legend('Mea. Path Error', 'Mea. Angle Error', 'Filt Path Error', 'Filt Angle Error', 'Path Filt Deriv', 'Angle Filt Deriv');
+         plot([0:dt:t], pathErrorPlot(:,1:plotIndex),'-', [0:dt:t], pathErrorFiltPlot(:,1:plotIndex),'*');
+         axis([0,t,-.01,.01])
+         legend('Mea. Path Error', 'Mea. Angle Error', 'Filt Path Error', 'Filt Angle Error');
+         title('Measured States w/o Noise');xlabel('Time (s)');ylabel(sprintf('Path Error (m\nAngle Error (rad)'));
+         subplot(2,2,4);
+         plot([0:dt:t], ErrorDerivPlot(:,1:plotIndex),'--')
+         legend('Path Filt Deriv', 'Angle Filt Deriv');
+         axis([0,t,-.01,.01])
+         title('Derivative of Errors');xlabel('Time (s)');ylabel(sprintf('Path Error Derivative (m/s)\nAngle Error Derivative (rad/s)'));
      end
     %get all sensor data
     %do SS for each error state

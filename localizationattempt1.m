@@ -14,7 +14,7 @@
 %x, y and theta estimate.
 
 dt = .01;
-time = 0:dt:10;
+time = 0:dt:50;
 axelLen = .5;
 wheelDia = .33;
 
@@ -28,15 +28,19 @@ dERS = [0,0,0,0,0,0];
 residual = [0,0,0,0,0,0];
 measuredWheelSpeeds = [0,0];
 
-Kx = diag([.1, .1, .1, .1, .1, .1]);
+Kx = diag([.5, .5, 1.3, .5, .5, .5]);
 
 trueRecord = zeros(6,length(time));
 measuredRecord = zeros(6,length(time));
 estimatedRecord = zeros(6,length(time));
 recordIndex =0;
 
+wheelDisturbance = ones(2,length(time));
+wheelDisturbance(1,1000:1300) = .1;
+wheelDisturbance(2,2500:3000) = .1;
+
 for t = time
-    dx = robotdynamics(Ul,Ur,robotState(3),dt,wheelDia,axelLen);
+    dx = robotdynamics(Ul*wheelDisturbance(1,int16(t/dt)+1),Ur*wheelDisturbance(2,int16(t/dt)+1),robotState(3),dt,wheelDia,axelLen);
     robotState = [robotState(1:3) + dx', dx'];
     measuredRobotState(1) = robotState(1) + normrnd(0,.02); %x, from tag
     measuredRobotState(2) = robotState(2) + normrnd(0,.02); %y, from tag
@@ -56,11 +60,19 @@ for t = time
 end
 
 figure()
-tites = ['X';'Y';'Theta';'dX';'dY';'dTh']
+tites = ['X    ';'Y    ';'Theta';'dX   ';'dY   ';'dTh  '];
 for plotter = 1:6
   subplot(2,3,plotter);
-  plot(time, trueRecord(plotter,:), time, measuredRecord(plotter,:), time, estimatedRecord(plotter,:));
-  legend('True', 'measured', 'estimated');
+  hold on;
+  plot(time, measuredRecord(plotter,:), time, estimatedRecord(plotter,:),'.');
+  plot(time, trueRecord(plotter,:),'-','LineWidth', 1);
+  hold off;
+  legend('Measured', 'Estimated', 'True');
   title(tites(plotter,:));
+  xlabel('Time (s)')
+  ylabel('Distance (m)');
+  if plotter > 3
+      ylabel('Velocity (m/s)');
+  end
 end
     
