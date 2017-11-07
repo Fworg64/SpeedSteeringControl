@@ -43,7 +43,7 @@ distancetostartsq = xintercept^2;
 %Double Arc - w/ linear displacement
 %If intercept is opposite of the current quadrant
 % Assumes that arc centers will be 'stacked' on one another
-if ( (xintercept<0 && x1>0) || (xintercept>0 && x1<0) )
+if ( ((xintercept<0 && x1>0) || (xintercept>0 && x1<0)) ) %nded out
     disp('Double Arc - linear displacement');
     mode = 3;
     
