@@ -49,15 +49,15 @@ wayThTit = uicontrol('Parent',f,'Style','text','Position',[320,25,120,23],...
                 'String','wayTh','BackgroundColor',bgcolor);
             
             
-xPos.Callback  = @(es,ed) oneTurnPlotter(es.Value,   yPos.Value, thPos.Value,  waypoint(1),waypoint(2),waypoint(3));
+xPos.Callback  = @(es,ed) oneTurnPlotter(es.Value,   yPos.Value, thPos.Value,  wayX.Value, wayY.Value,  wayTh.Value);
 
-yPos.Callback  = @(es,ed) oneTurnPlotter(xPos.Value, es.Value,   thPos.Value,  waypoint(1),waypoint(2),waypoint(3));
+yPos.Callback  = @(es,ed) oneTurnPlotter(xPos.Value, es.Value,   thPos.Value,  wayX.Value, wayY.Value,  wayTh.Value);
 
-thPos.Callback = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, es.Value,     waypoint(1),waypoint(2),waypoint(3));
+thPos.Callback = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, es.Value,     wayX.Value, wayY.Value,  wayTh.Value);
 
-wayX.Callback  = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, thPos.Value,  es.Value,   waypoint(2),waypoint(3));
+wayX.Callback  = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, thPos.Value,  es.Value,   wayY.Value,  wayTh.Value);
 
-wayY.Callback  = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, thPos.Value,  waypoint(1),es.Value,   waypoint(3));
+wayY.Callback  = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, thPos.Value,  wayX.Value, es.Value,    wayTh.Value);
 
-wayTh.Callback = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, thPos.Value,  waypoint(1),waypoint(2),es.Value);
+wayTh.Callback = @(es,ed) oneTurnPlotter(xPos.Value, yPos.Value, thPos.Value,  wayX.Value, wayY.Value,  es.Value);
 

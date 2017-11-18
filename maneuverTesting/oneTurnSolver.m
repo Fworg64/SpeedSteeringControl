@@ -49,7 +49,7 @@ if (distancetostartsq < distancetoendsq) %turn is first maneuver
 else %turn is second
     A = 1;
     B = (2*wpY / tan(wpTh) - 2*wpX);
-    C = wpX^2 - 2*wpY/tan(wpTh) *wpX - wpY^2; %is this correct?
+    C = wpX^2 - 2*wpY*wpX/tan(wpTh) - wpY^2; %is this correct?
     
     potXcA = (-B + sqrt(B^2 - 4*A*C))/(2*A);
     potXcB = (-B - sqrt(B^2 - 4*A*C))/(2*A);
