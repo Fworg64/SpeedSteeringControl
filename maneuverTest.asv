@@ -1,0 +1,11 @@
+%maneuverTest
+%this file serves as the calling script for testing the maneuver planners.
+%firstly it shall provide an easy means of testing the oneTurnSolver and
+%plotting results graphically using maneuverPlot
+
+initialPose = [1,0,0];
+waypoint = [2,1,pi/3];
+
+[distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = oneTurnSolver(initialPose(1),initialPose(2),initialPose(3), waypoint(1),waypoint(2), waypoint(3) );
+
+maneuverPlot(initialPose(1),initialPose(2),initialPose(3),

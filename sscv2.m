@@ -22,10 +22,10 @@ if (radius ~=0) %(abs(radius) >=AxelLen/2)
   if (abs(Ur) >MaxSpeed) %if right wheel would be spinning too fast
     S2factor = Ur/MaxSpeed;
     Ur = Ur/S2factor;
-    speed2 = speed/S2factor;
+    %speed2 = speed/S2factor;
     %Ul = (4*radius*speed2/(AxelLen*wheelR) - 2*speed2/wheelR)*AxelLen/(radius*4);
     Ul = Ul/S2factor;
-    end
+  end
 else
 Ul = -.5*speed*wheelR;
 Ur = .5*speed*wheelR;
