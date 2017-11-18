@@ -37,6 +37,6 @@ function [x,y,theta] = findCPP(robotX, robotY, CenterX, CenterY, Radius)
     x = Xp;
     y = Yp;
     
-    theta = atan2(center(2) - Yp, center(1) - Xp) - pi/2;
+    theta = angleDiff(atan2(Yp - center(2), Xp - center(1)), pi/2);
 end
 

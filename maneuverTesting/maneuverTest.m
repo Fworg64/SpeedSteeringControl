@@ -4,8 +4,8 @@
 %plotting results graphically using maneuverPlot
 
 
-initialPose = [.5,0,0];
-waypoint = [2,-1,-pi/3];
+initialPose = [.75,1,0];
+waypoint = [1.25,0,-pi/3];
 f = figure();
 ax = axes('Parent',f,'position',[0.13 0.39  0.77 0.54]);
 
