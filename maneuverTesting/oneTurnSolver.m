@@ -27,7 +27,7 @@ distancetostartsq = xintercept*xintercept;
 
 if (distancetostartsq < distancetoendsq) %turn is first maneuver
     xc1 = 0;
-    yc1 = tan((pi - wpTh)/2) * xintercept; % this is probably the culprit
+    yc1 = tan((pi - wpTh)/2) * xintercept;
     radius1 = yc1;
     distance1 = abs(wpTh*radius1);
     
