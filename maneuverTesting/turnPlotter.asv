@@ -20,7 +20,5 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
             (sign(wpy) ==-1 && sign(xintercept) ==1 && sign(wpth) ==-1))
         oneTurnPlotter(xi, yi, thi, wpx, wpy, wpth);
     else
-        disp('YOUR HOSED');
-    end
 
 end

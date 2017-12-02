@@ -28,7 +28,7 @@ dERS = [0,0,0,0,0,0];
 residual = [0,0,0,0,0,0];
 measuredWheelSpeeds = [0,0];
 
-Kx = diag([.5, .5, 1.3, .5, .5, .5]);
+Kx = .1*diag([.5, .5, 1.3, .5, .5, .5]);
 
 trueRecord = zeros(6,length(time));
 measuredRecord = zeros(6,length(time));
@@ -45,13 +45,13 @@ for t = time
     measuredRobotState(1) = robotState(1) + normrnd(0,.02); %x, from tag
     measuredRobotState(2) = robotState(2) + normrnd(0,.02); %y, from tag
     measuredRobotState(3) = robotState(3) + normrnd(0,.02); %theta, from tag
-    measuredRobotState(4) = robotState(4) + normrnd(0,.02); %xv, integrate IMU
-    measuredRobotState(5) = robotState(5) + normrnd(0,.02); %yv, integrate IMU
-    measuredRobotState(6) = robotState(6) + normrnd(0,.02); %theta, integrate IMU
+    measuredRobotState(4) = robotState(4) + normrnd(0,.002); %xv, integrate IMU
+    measuredRobotState(5) = robotState(5) + normrnd(0,.002); %yv, integrate IMU
+    measuredRobotState(6) = robotState(6) + normrnd(0,.002); %theta, integrate IMU
     measuredWheelSpeeds = [Ul + normrnd(0, .02), Ur + normrnd(0,.02)]; %read back from vescs
     residual = estimatedRobotState - measuredRobotState;
     dERS1 = robotdynamics(measuredWheelSpeeds(1), measuredWheelSpeeds(2), estimatedRobotState(3), dt, wheelDia, axelLen);
-    estimatedRobotState = [estimatedRobotState(1:3) + dERS1',dERS1'] - residual*Kx*dt;
+    estimatedRobotState = [estimatedRobotState(1:3) + dERS1',dERS1'] - residual*Kx;
     
     recordIndex = recordIndex+1;
     trueRecord(:,recordIndex ) = robotState;

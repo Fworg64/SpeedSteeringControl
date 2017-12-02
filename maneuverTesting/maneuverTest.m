@@ -4,8 +4,8 @@
 %plotting results graphically using maneuverPlot
 
 
-initialPose = [.75,1,0];
-waypoint = [1.25,0,-pi/3];
+initialPose = [.5,0,0];
+waypoint = [3.25,1.5,.022];
 f = figure();
 ax = axes('Parent',f,'position',[0.13 0.39  0.77 0.54]);
 
@@ -60,4 +60,5 @@ wayX.Callback  = @(es,ed) turnPlotter(xPos.Value, yPos.Value, thPos.Value,  es.V
 wayY.Callback  = @(es,ed) turnPlotter(xPos.Value, yPos.Value, thPos.Value,  wayX.Value, es.Value,    wayTh.Value);
 
 wayTh.Callback = @(es,ed) turnPlotter(xPos.Value, yPos.Value, thPos.Value,  wayX.Value, wayY.Value,  es.Value);
+
 
