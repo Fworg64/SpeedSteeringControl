@@ -7,7 +7,7 @@ function [distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = twoTurnS
 
 xintercept = -wpY / tan(wpTh) + wpX;
 
-if (xintercept >=0 && sign(wpTh) ~= sign(wpY)) %opposite of oneTurnSolver if you called this with these conditions you did it wrong
+if (xintercept <=0 && sign(wpTh) ~= sign(wpY)) %opposite of oneTurnSolver if you called this with these conditions you did it wrong
     distance1 =0;
     radius1=0;
     xc1=0;
