@@ -7,17 +7,17 @@ function [distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = twoTurnS
 
 xintercept = -wpY / tan(wpTh) + wpX;
 
-if (xintercept >=0 && sign(wpTh) ~= sign(wpY)) %opposite of oneTurnSolver if you called this with these conditions you did it wrong
-    distance1 =0;
-    radius1=0;
-    xc1=0;
-    yc1=0;
-    distance2=0;
-    radius2=0;
-    xc2=0;
-    yc2=0;
-    return;
-end
+% if (xintercept <=0 && (sign(wpTh) ~= sign(wpY))) %conditions where this doesn't work
+%     distance1 =0;
+%     radius1=0;
+%     xc1=0;
+%     yc1=0;
+%     distance2=0;
+%     radius2=0;
+%     xc2=0;
+%     yc2=0;
+%     return;
+% end
 
 disp('TwoTurnSolver');
 
@@ -28,22 +28,25 @@ disp('TwoTurnSolver');
 if (wpY > 0)
     cosanglearg = -wpTh - pi/2;
     sinanglearg = -wpTh +pi/2
-    distance1sign = -1;
+    distance1sign = 1;
     distance2sign = 1;
 else
     cosanglearg = -wpTh - pi/2;
     sinanglearg = -wpTh +pi/2;
-    distance1sign = -1;
-    distance2sign = -1;
+    distance1sign = 1;
+    distance2sign = 1;
 end
 A = cos(cosanglearg)^2 + (1+sin(sinanglearg))^2 -4;
 B = -2*wpX*cos(cosanglearg) - 2*wpY*(1+sin(sinanglearg));
 C = wpX^2 + wpY^2;
 
-da = (-B + sqrt(B^2 - 4*A*C))/(2*A)
-db = (-B - sqrt(B^2 - 4*A*C))/(2*A)
-
-d = max(da,db);
+if (A < .0001 && A > -.0001)
+    d = -C/B
+else
+    da = (-B + sqrt(B^2 - 4*A*C))/(2*A)
+    db = (-B - sqrt(B^2 - 4*A*C))/(2*A)
+    d = max(da,db);
+end
 
 xc1 =0;
 yc1 = d;
@@ -55,8 +58,9 @@ yc2 = wpY - d*sin(sinanglearg)
 xintermediate = (xc1+xc2)/2
 yintermediate = (yc1+yc2)/2
 
-distance1 = distance1sign*d*atan2(xintmediate, radius1-yintermediate)   %atan2(yc2-yintermediate,xintermediate)
-distance2 = distance2sign*d*(atan2(wpY - yc2,wpX - xc2) - atan2(wpY - yintermediate, wpX - xintermediate))
+theta1 = atan2(xintermediate, radius1-yintermediate)
+distance1 = distance1sign*d*theta1   %atan2(yc2-yintermediate,xintermediate)
+distance2 = distance2sign*d*(theta1-wpTh)      %(atan2(wpY - yc2,wpX - xc2) - atan2(wpY - yintermediate, wpX - xintermediate))
 
 %display intermediate points in world coord
 [xintWORLD, yintWORLD, thetaintWORLD] = transformPoseToRobotCoord(robotx, roboty, robotth, xintermediate, yintermediate, abs(distance1/radius1))

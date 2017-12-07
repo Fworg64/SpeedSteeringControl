@@ -16,9 +16,9 @@
 dt = .01;
 time = 0:dt:50;
 axelLen = .5;
-wheelRadius = 1; %make radius =1
+wheelDia = 2;
 
-Ul = .3; %this is m/s because radius of wheel =1
+Ul = .3;
 Ur = .3;
 
 robotState = [0,0,0,0,0,0];
@@ -40,7 +40,7 @@ wheelDisturbance(1,1000:1300) = .1;
 wheelDisturbance(2,2500:3000) = .1;
 
 for t = time
-    dx = robotdynamics(Ul*wheelDisturbance(1,int16(t/dt)+1),Ur*wheelDisturbance(2,int16(t/dt)+1),robotState(3),dt,wheelRadius,axelLen);
+    dx = robotdynamics(Ul*wheelDisturbance(1,int16(t/dt)+1),Ur*wheelDisturbance(2,int16(t/dt)+1),robotState(3),dt,wheelDia,axelLen);
     robotState = [robotState(1:3) + dx', 1/dt * dx'];
     measuredRobotState(1) = robotState(1) + normrnd(0,.05); %x, from tag
     measuredRobotState(2) = robotState(2) + normrnd(0,.05); %y, from tag
@@ -49,7 +49,7 @@ for t = time
     %measuredRobotState(4) = robotState(4) + normrnd(0,.002); %xv, integrate IMU
     %measuredRobotState(5) = robotState(5) + normrnd(0,.002); %yv, integrate IMU
     %measuredRobotState(6) = robotState(6) + normrnd(0,.002); %theta, integrate IMU
-    dERS1 = robotdynamics(measuredWheelSpeeds(1), measuredWheelSpeeds(2), estimatedRobotState(3), dt, wheelRadius, axelLen);
+    dERS1 = robotdynamics(measuredWheelSpeeds(1), measuredWheelSpeeds(2), estimatedRobotState(3), dt, wheelDia, axelLen);
         
     %if no imu, measured states are the same as estimated states uncomment
     %these lines need to be uncommented if no imu
