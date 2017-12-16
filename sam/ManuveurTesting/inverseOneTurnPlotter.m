@@ -1,14 +1,20 @@
-%oneTurnPlotter
-
-
-
-function [] = oneTurnPlotter(xi, yi, thi, wpx, wpy, wpth)
+function [] = inverseOneTurnPlotter( xi, yi, thi, wpx, wpy, wpth)
 initialPose = [xi, yi, thi];
-waypoint = [wpx, wpy, wpth];
-
+waypoint = [2*xi-wpx, 2*yi-wpy, wpth]
+%check angle here
 cla;
 
-[distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = oneTurnSolver(initialPose(1),initialPose(2),initialPose(3), waypoint(1),waypoint(2), waypoint(3) )
+[distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = oneTurnSolver(initialPose(1),initialPose(2),initialPose(3), waypoint(1),waypoint(2), waypoint(3) );
+
+distance1 = -distance1
+radius1 = -radius1
+xc1 = 2*xi - xc1
+yc1 = 2*yi - yc1
+distance2 = -distance2
+radius2 = -radius2
+xc2 = 2*xi - xc2
+yc2 = 2*yi - yc2
+
 
 maneuverPlot(initialPose(1),initialPose(2),initialPose(3),distance1, radius1, xc1, yc1);
 
@@ -23,4 +29,6 @@ hold off;
 
 title(sprintf('From [%.2f, %.2f, %.2f] to [%.2f, %.2f, %.2f]',initialPose(1),initialPose(2),initialPose(3),  waypoint(1),waypoint(2), waypoint(3)));
 
+
 end
+

@@ -18,8 +18,8 @@ time = 0:dt:50;
 axelLen = .5;
 wheelRadius = 1; %make radius =1
 
-Ul = .3; %this is m/s because radius of wheel =1
-Ur = .3;
+Ul = -.3; %this is m/s because radius of wheel =1
+Ur = -.1;
 
 robotState = [0,0,0,0,0,0];
 measuredRobotState = [0,0,0,0,0,0];
@@ -46,19 +46,22 @@ for t = time
     measuredRobotState(2) = robotState(2) + normrnd(0,.05); %y, from tag
     measuredRobotState(3) = robotState(3) + normrnd(0,.05); %theta, from tag
     %if no imu, comment out these 3 lines
-    %measuredRobotState(4) = robotState(4) + normrnd(0,.002); %xv, integrate IMU
-    %measuredRobotState(5) = robotState(5) + normrnd(0,.002); %yv, integrate IMU
-    %measuredRobotState(6) = robotState(6) + normrnd(0,.002); %theta, integrate IMU
+    measuredRobotState(4) = robotState(4) + normrnd(0,.002); %xv, integrate IMU
+    measuredRobotState(5) = robotState(5) + normrnd(0,.002); %yv, integrate IMU
+    measuredRobotState(6) = robotState(6) + normrnd(0,.002); %theta, integrate IMU
     dERS1 = robotdynamics(measuredWheelSpeeds(1), measuredWheelSpeeds(2), estimatedRobotState(3), dt, wheelRadius, axelLen);
         
     %if no imu, measured states are the same as estimated states uncomment
     %these lines need to be uncommented if no imu
-    measuredRobotState(4) = 1/dt * dERS1(1);
-    measuredRobotState(5) = 1/dt * dERS1(2);
-    measuredRobotState(6) = 1/dt * dERS1(3);
+    %measuredRobotState(4) = 1/dt * dERS1(1);
+    %measuredRobotState(5) = 1/dt * dERS1(2);
+    %measuredRobotState(6) = 1/dt * dERS1(3);
     
-    measuredWheelSpeeds = [Ul + normrnd(0, .02), Ur + normrnd(0,.02)]; %read back from vescs
+    measuredWheelSpeeds = [Ul*wheelDisturbance(1,int16(t/dt)+1) + normrnd(0, .02), Ur*wheelDisturbance(2,int16(t/dt)+1) + normrnd(0,.02)]; %read back from vescs
     residual = estimatedRobotState - measuredRobotState;
+    %no imu
+    estimatedRobotState = [estimatedRobotState(1:3) + dERS1',1/dt * dERS1'] - residual*Kx;
+    %with imu (pick one)
     estimatedRobotState = [estimatedRobotState(1:3) + dERS1',1/dt * dERS1'] - residual*Kx;
     
     recordIndex = recordIndex+1;
@@ -79,6 +82,9 @@ for plotter = 1:6
   title(tites(plotter,:));
   xlabel('Time (s)')
   ylabel('Distance (m)');
+  if plotter == 2
+      ylabel('Angle (Radians)');
+  end
   if plotter > 3
       ylabel('Velocity (m/s)');
   end
