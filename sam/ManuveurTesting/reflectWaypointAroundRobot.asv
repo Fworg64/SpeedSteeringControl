@@ -1,0 +1,19 @@
+function [ wpRx, wpRy, wpRth ] = reflectWaypointAroundRobot( wpx, wpy, wpth, rx, ry, rth)
+%REFLECTWAYPOINTAROUNDROBOT reflects a waypoint around the y axis of the
+%robot
+%   does it in world coordinates
+
+%reflect wpx and wpy around y = tan(rth)*(x - xth) + yth
+%wpRth = rth-anglediff(wpth,rth)
+wpRth = rth-angleDiff(wpth,rth);
+
+%from stackexchange
+%put line in ay + bx + c =0
+%y - y1 = m(x - x1)
+%y = mx
+
+wpRx = (rx*(
+
+
+end
+
