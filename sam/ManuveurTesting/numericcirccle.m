@@ -1,6 +1,6 @@
 %try agian
-initialpose = [0,0,0];
-waypoint = [2.75,1.29,.15];
+%initialpose = [1.89, .36, -.4];
+[waypoint(1), waypoint(2), waypoint(3)] = transformPoseToRobotCoord(1.89, .36, -.4, 4.21, -.59, -1.81);   %[4.21,-.59,-1.81];
 
 
 f = figure();
@@ -11,7 +11,7 @@ radius = uicontrol('Parent',f,'Style','slider','Position',[81,134,420,23],...
           
 radius.Callback = @(es,ed) plotNumericCircles(es.Value, waypoint(1),waypoint(2),waypoint(3));
     fieldlength = 7.38;
-
+    fieldwidth = 3.78;
 xlim([0,fieldlength]);
 ylim([-fieldwidth/2,fieldwidth/2]);
 pbaspect([fieldlength,fieldwidth,1]);

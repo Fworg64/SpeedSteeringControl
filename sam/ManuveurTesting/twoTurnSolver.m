@@ -27,7 +27,7 @@ disp('TwoTurnSolver');
 %negative (to the right)
 if (wpY > 0)
     cosanglearg = -wpTh - pi/2;
-    sinanglearg = -wpTh +pi/2
+    sinanglearg = -wpTh +pi/2;
     distance1sign = 1;
     distance2sign = 1;
 else
@@ -41,29 +41,29 @@ B = -2*wpX*cos(cosanglearg) - 2*wpY*(1+sin(sinanglearg));
 C = wpX^2 + wpY^2;
 
 if (A < .0001 && A > -.0001)
-    d = -C/B
+    d = -C/B;
 else
-    da = (-B + sqrt(B^2 - 4*A*C))/(2*A)
-    db = (-B - sqrt(B^2 - 4*A*C))/(2*A)
+    da = (-B + sqrt(B^2 - 4*A*C))/(2*A);
+    db = (-B - sqrt(B^2 - 4*A*C))/(2*A);
     d = max(da,db);
 end
 
 xc1 =0;
 yc1 = d;
-radius1 = d
+radius1 = d;
 radius2 = -d;
-xc2 = wpX - d*cos(cosanglearg)
-yc2 = wpY - d*sin(sinanglearg)
+xc2 = wpX - d*cos(cosanglearg);
+yc2 = wpY - d*sin(sinanglearg);
 
-xintermediate = (xc1+xc2)/2
-yintermediate = (yc1+yc2)/2
+xintermediate = (xc1+xc2)/2;
+yintermediate = (yc1+yc2)/2;
 
-theta1 = atan2(xintermediate, radius1-yintermediate)
-distance1 = distance1sign*d*theta1   %atan2(yc2-yintermediate,xintermediate)
-distance2 = distance2sign*d*(theta1-wpTh)      %(atan2(wpY - yc2,wpX - xc2) - atan2(wpY - yintermediate, wpX - xintermediate))
+theta1 = atan2(xintermediate, radius1-yintermediate);
+distance1 = distance1sign*d*theta1;   %atan2(yc2-yintermediate,xintermediate)
+distance2 = distance2sign*d*(theta1-wpTh);      %(atan2(wpY - yc2,wpX - xc2) - atan2(wpY - yintermediate, wpX - xintermediate))
 
 %display intermediate points in world coord
-[xintWORLD, yintWORLD, thetaintWORLD] = transformPoseToRobotCoord(robotx, roboty, robotth, xintermediate, yintermediate, abs(distance1/radius1))
+[xintWORLD, yintWORLD, thetaintWORLD] = transformPoseToRobotCoord(robotx, roboty, robotth, xintermediate, yintermediate, abs(distance1/radius1));
 
 %     %Construct quatratic polynomial and determine roots
 %     A = 2*(1-sin(pi/2 -wpTh));
