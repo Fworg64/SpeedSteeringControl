@@ -11,7 +11,7 @@ beenflipped = false;
 %     %need to put waypoint above robot for calculations and then invert the
 %     %maneuvers radii?
 %     
-if (abs(thi) < pi/2)
+if (abs(thi) <= pi/2)
     if (tan(thi)*(wpx - xi) + yi > wpy)
         [wpx, wpy, wpth] = reflectWaypointAroundRobot(wpx, wpy, wpth, xi, yi ,thi);
         disp('flip1');
