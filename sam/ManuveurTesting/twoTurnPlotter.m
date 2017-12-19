@@ -17,7 +17,7 @@ if (abs(thi) <= pi/2)
         disp('flip1');
         beenflipped = true;
     end
-else %want to make sure angle is either > pi/2 or <= but doing it like above commented out section still leaves some spots open..
+else %want to make sure angle is either > pi/2 or <=, nothing else
     if (tan(thi)*(wpx - xi) + yi < wpy)
         [wpx, wpy, wpth] = reflectWaypointAroundRobot(wpx, wpy, wpth, xi, yi ,thi);
         disp('flip1');

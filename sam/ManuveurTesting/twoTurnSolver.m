@@ -5,7 +5,7 @@ function [distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = twoTurnS
 
 [wpX, wpY, wpTh] = transformPoseToRobotCoord(robotx, roboty, robotth, waypointx, waypointy, waypointth);
 
-xintercept = -wpY / tan(wpTh) + wpX;
+%xintercept = -wpY / tan(wpTh) + wpX;
 
 % if (xintercept <=0 && (sign(wpTh) ~= sign(wpY))) %conditions where this doesn't work
 %     distance1 =0;
