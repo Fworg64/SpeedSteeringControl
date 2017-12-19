@@ -6,6 +6,7 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
     [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth);
 
     xintercept = -TwpY / tan(TwpTh) + TwpX;
+    minSingleTurnRadius = .5;
 
 %     if (xintercept <0 || sign(TwpTh) ~= sign(TwpY))
 %         twoTurnPlotter(xi, yi, thi, wpx, wpy, wpth);
@@ -33,6 +34,9 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      wpy = wpy
      wpth = wpth
      AngleDiff = angleDiff(thi, wpth)
+     if (abs(TwpTh) < .001)
+         TwpTh = .0001;
+     end
      if (sign(TwpY) ==1)
          if (sign(xintercept) ~= sign(TwpTh))
             %two turn
