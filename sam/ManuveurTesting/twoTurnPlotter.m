@@ -6,13 +6,23 @@ initialPose = [xi, yi, thi];
 waypoint = [wpx, wpy, wpth];
 beenflipped = false;
 
-if (tan(thi)*(wpx - xi) + yi > wpy) %waypoint is below robot (negative y)
-    %need to put waypoint above robot for calculations and then invert the
-    %maneuvers radii?
-    [wpx, wpy, wpth] = reflectWaypointAroundRobot(wpx, wpy, wpth, xi, yi ,thi);
-    disp('flip1');
-    beenflipped = true;
-
+% if ((tan(thi)*(wpx - xi) + yi > wpy) && abs(thi) < pi/2  || ...)% && angleDiff(thi, wpth) > 0) %waypoint is below robot (negative y)
+%      (tan(thi)*(wpx - xi) + yi < wpy) && abs(thi) >=pi/2 - .1) %need to handle changing definition of above for rotating robot
+%     %need to put waypoint above robot for calculations and then invert the
+%     %maneuvers radii?
+%     
+if (abs(thi) < pi/2)
+    if (tan(thi)*(wpx - xi) + yi > wpy)
+        [wpx, wpy, wpth] = reflectWaypointAroundRobot(wpx, wpy, wpth, xi, yi ,thi);
+        disp('flip1');
+        beenflipped = true;
+    end
+else %want to make sure angle is either > pi/2 or <= but doing it like above commented out section still leaves some spots open..
+    if (tan(thi)*(wpx - xi) + yi < wpy)
+        [wpx, wpy, wpth] = reflectWaypointAroundRobot(wpx, wpy, wpth, xi, yi ,thi);
+        disp('flip1');
+        beenflipped = true;
+    end
 end
 
 cla;
