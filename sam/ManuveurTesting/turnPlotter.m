@@ -5,26 +5,13 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
 
     [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth);
 
-    xintercept = -TwpY / tan(TwpTh) + TwpX;
-    minSingleTurnRadius = .5;
+    
+     if (abs(TwpTh) < .001)
+         TwpTh = .0001;
+     end
 
-%     if (xintercept <0 || sign(TwpTh) ~= sign(TwpY))
-%         twoTurnPlotter(xi, yi, thi, wpx, wpy, wpth);
-%     else
-%         oneTurnPlotter(xi, yi, thi, wpx, wpy, wpth);
-%     end
-% 
-%     if ((sign(wpy) ==1 &&(sign(xintercept) ~= sign(wpth))) ...
-%             || (sign(wpy) == -1 && (sign(xintercept) == sign(wpth))))
-%         twoTurnPlotter(xi,yi,thi,wpx,wpy,wpth);
-%     elseif ((sign(wpy) ==  1 && sign(xintercept) ==1 && sign(wpth) ==  1) || ...
-%             (sign(wpy) == -1 && sign(xintercept) ==1 && sign(wpth) == -1)|| ...
-%              (abs(abs(wpth -thi) -pi )< .01)|| ...
-%              (xintercept <0 || sign(wpTh) ~= sign(wpY))) %The 'dead' area
-%         oneTurnPlotter(xi, yi, thi, wpx, wpy, wpth);
-%     else
-%         disp('YOUR HOSED');
-%     end
+     xintercept = -TwpY / tan(TwpTh) + TwpX
+     minSingleTurnRadius = .5;
 
      disp('Start');
      xi = xi
@@ -34,9 +21,7 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      wpy = wpy
      wpth = wpth
      AngleDiff = angleDiff(thi, wpth)
-     if (abs(TwpTh) < .001)
-         TwpTh = .0001;
-     end
+
      if (sign(TwpY) ==1)
          if (sign(xintercept) ~= sign(TwpTh))
             %two turn
