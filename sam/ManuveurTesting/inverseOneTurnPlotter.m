@@ -1,6 +1,6 @@
 function [] = inverseOneTurnPlotter( xi, yi, thi, wpx, wpy, wpth)
 initialPose = [xi, yi, thi];
-waypoint = [2*xi-wpx, 2*yi-wpy, wpth]
+waypoint = [2*xi-wpx, 2*yi-wpy, wpth];
 %check angle here
 cla;
 
@@ -27,7 +27,7 @@ plot(wpx+.25*cos(wpth),wpy+.25*sin(wpth), 'rd');
 plot(wpx-.25*cos(wpth),wpy-.25*sin(wpth), 'bx');
 hold off;
 
-title(sprintf('From [%.2f, %.2f, %.2f] to [%.2f, %.2f, %.2f]',initialPose(1),initialPose(2),initialPose(3),  waypoint(1),waypoint(2), waypoint(3)));
+title(sprintf('From [%.2f, %.2f, %.2f] to [%.2f, %.2f, %.2f]',initialPose(1),initialPose(2),initialPose(3),  wpx,wpy, wpth));
 
 
 end
