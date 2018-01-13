@@ -25,6 +25,26 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      wpy = wpy
      wpth = wpth
      AngleDiff = angleDiff(thi, wpth)
+     
+     if (abs(TwpY) < .001)
+         TwpY = .0001;
+         wpx = wpx + .0001 * cos(wpth + pi/2);
+         wpy = wpy + .0001 * sin(wpth + pi/2);
+         if (abs(TwpTh < .001))
+             wpth = wpth + .0001;
+         end
+     end
+     
+     angleDiff(pi,TwpTh)
+     if (angleDiff(pi,TwpTh) < .001)
+         disp('Fudge1')
+         wpth = angleDiff(wpth,-.0001);
+         TwpTh = angleDiff(TwpTh, -.0001);
+     end
+     
+     if (abs(thi) < .001)
+         thi = -.0001;
+     end
 
      if (sign(TwpY) ==1)
          if (sign(xintercept) ~= sign(TwpTh))
