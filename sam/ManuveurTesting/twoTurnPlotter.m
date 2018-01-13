@@ -29,13 +29,14 @@ cla;
 
 [distance1, radius1, xc1, yc1, distance2, radius2, xc2, yc2] = twoTurnSolver(xi, yi, thi, wpx, wpy, wpth)
 if (beenflipped)
+    disp('flip2');
+
     radius1 = -radius1
     radius2 = -radius2
     [wpx, wpy, wpth] = reflectWaypointAroundRobot(wpx, wpy, wpth, xi, yi ,thi);
-    [xc1, yc1] = reflectWaypointAroundRobot(xc1, yc1, 0, xi, yi, thi);
-    [xc2, yc2] = reflectWaypointAroundRobot(xc2, yc2, 0, xi, yi, thi);
+    [xc1, yc1] = reflectWaypointAroundRobot(xc1, yc1, 0, xi, yi, thi)
+    [xc2, yc2] = reflectWaypointAroundRobot(xc2, yc2, 0, xi, yi, thi)
 
-    disp('flip2');
 end
 
 maneuverPlot(xi, yi, thi, distance1, radius1, xc1, yc1);

@@ -36,9 +36,9 @@ else
     distance1sign = 1;
     distance2sign = 1;
 end
-A = cos(cosanglearg)^2 + (1+sin(sinanglearg))^2 -4;
-B = -2*wpX*cos(cosanglearg) - 2*wpY*(1+sin(sinanglearg));
-C = wpX^2 + wpY^2;
+A = cos(cosanglearg)^2 + (1+sin(sinanglearg))^2 -4
+B = -2*wpX*cos(cosanglearg) - 2*wpY*(1+sin(sinanglearg))
+C = wpX^2 + wpY^2
 
 if (A < .0001 && A > -.0001)
     d = -C/B;
