@@ -10,8 +10,10 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
          TwpTh = .0001;
      end
 
-     xintercept = -TwpY / tan(TwpTh) + TwpX
+     xintercept = -TwpY / tan(TwpTh) + TwpX;
      minSingleTurnRadius = .5;
+     
+     if (xintercept ==0) xintercept = .0001; % make sign positive if zero
 
      disp('Start');
      xi = xi

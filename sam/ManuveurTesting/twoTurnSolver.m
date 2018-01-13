@@ -26,13 +26,13 @@ disp('TwoTurnSolver');
 %that is, first radius is positive (to the left) and second radius is
 %negative (to the right)
 if (wpY > 0)
-    cosanglearg = -wpTh - pi/2;
-    sinanglearg = -wpTh +pi/2;
+    cosanglearg = -wpTh - pi/2
+    sinanglearg = -wpTh + pi/2
     distance1sign = 1;
     distance2sign = 1;
 else
     cosanglearg = -wpTh - pi/2;
-    sinanglearg = -wpTh +pi/2;
+    sinanglearg = -wpTh + pi/2;
     distance1sign = 1;
     distance2sign = 1;
 end

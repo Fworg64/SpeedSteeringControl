@@ -1,0 +1,1 @@
+octave --eval "turnPlotter(0,0,0,2,.2,0)" | python output2test.py | xclip -sel clip
