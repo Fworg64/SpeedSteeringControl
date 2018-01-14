@@ -26,25 +26,37 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      wpth = wpth
      AngleDiff = angleDiff(thi, wpth)
      
-     if (abs(TwpY) < .001)
-         TwpY = .0001;
-         wpx = wpx + .0001 * cos(wpth + pi/2);
-         wpy = wpy + .0001 * sin(wpth + pi/2);
-         if (abs(TwpTh < .001))
-             wpth = wpth + .0001;
+     fudged = 0;
+     if (abs(TwpY) < .01)
+         disp('Fudge1');
+         fudged = 1;
+         wpx = wpx + .01 * cos(wpth + pi/2);
+         wpy = wpy + .01 * sin(wpth + pi/2);
+         
+         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth);
+
+         if (abs(TwpTh) < .001)
+             wpth = wpth + .001;
+             TwpTh = .001;
          end
+         
+         xintercept = -TwpY / tan(TwpTh) + TwpX
+
+
      end
      
      angleDiff(pi,TwpTh)
-     if (angleDiff(pi,TwpTh) < .001)
-         disp('Fudge1')
+     if (angleDiff(pi,TwpTh) < .001 && fudged ==0)
+         disp('Fudge2')
          wpth = angleDiff(wpth,-.0001);
          TwpTh = angleDiff(TwpTh, -.0001);
+         
+         xintercept = -TwpY / tan(TwpTh) + TwpX
      end
      
-     if (abs(thi) < .001)
-         thi = -.0001;
-     end
+     %if (abs(thi) < .001)
+     %    thi = -.0001;
+     %end
 
      if (sign(TwpY) ==1)
          if (sign(xintercept) ~= sign(TwpTh))
