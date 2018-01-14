@@ -3,18 +3,9 @@
 
 function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
 
-    [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth);
-
-    
+    [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
      if (abs(TwpTh) < .001)
          TwpTh = .0001;
-     end
-
-     xintercept = -TwpY / tan(TwpTh) + TwpX
-     minSingleTurnRadius = .5;
-     
-     if (xintercept ==0) 
-         xintercept = .0001; % make sign positive if zero
      end
 
      disp('Start');
@@ -30,28 +21,38 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      if (abs(TwpY) < .01)
          disp('Fudge1');
          fudged = 1;
-         wpx = wpx + .01 * cos(wpth + pi/2);
-         wpy = wpy + .01 * sin(wpth + pi/2);
+         wpx = wpx + .02 * sin(wpth + pi/2);
+         wpy = wpy + .02 * cos(wpth + pi/2);
          
-         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth);
+         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
 
          if (abs(TwpTh) < .001)
              wpth = wpth + .001;
              TwpTh = .001;
          end
-         
-         xintercept = -TwpY / tan(TwpTh) + TwpX
-
-
      end
      
      angleDiff(pi,TwpTh)
-     if (angleDiff(pi,TwpTh) < .001 && fudged ==0)
-         disp('Fudge2')
+     if (abs(angleDiff(pi,TwpTh)) < .001 && fudged ==0)
+         disp('Fudge2');
+         fudged = 1;
          wpth = angleDiff(wpth,-.0001);
          TwpTh = angleDiff(TwpTh, -.0001);
          
-         xintercept = -TwpY / tan(TwpTh) + TwpX
+     end
+     
+     if ((abs(angleDiff(pi/2, TwpTh)) < .001) || (abs(angleDiff(-pi/2, TwpTh)) < .01))
+         disp('Caramel1');
+         %fudged = 1;
+         wpth = angleDiff(wpth,-.0001)
+         TwpTh = angleDiff(TwpTh, -.0001)
+     end
+     
+     xintercept = -TwpY / tan(TwpTh) + TwpX
+    % minSingleTurnRadius = .5;
+     
+     if (xintercept ==0) 
+         xintercept = .0001; % make sign positive if zero
      end
      
      %if (abs(thi) < .001)
