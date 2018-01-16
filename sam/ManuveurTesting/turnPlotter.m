@@ -3,11 +3,6 @@
 
 function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
 
-    [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
-     if (abs(TwpTh) < .001)
-         TwpTh = .0001;
-     end
-
      disp('Start');
      xi = xi
      yi = yi
@@ -17,42 +12,51 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      wpth = wpth
      AngleDiff = angleDiff(thi, wpth)
      
-     fudged = 0;
-     if (abs(TwpY) < .01)
-         disp('Fudge1');
-         fudged = 1;
-         wpx = wpx + .02 * sin(wpth + pi/2);
-         wpy = wpy + .02 * cos(wpth + pi/2);
-         
-         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
+%     if (abs(thi) < .01)
+%         thi = .01;
+%         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
+%     end
+%     
+%     fudged = 0;
+%     if (abs(TwpY) < .01)
+%         disp('Fudge1');
+%         fudged = 1;
+%         wpx = wpx + .02 * sin(wpth + pi/2);
+%         wpy = wpy + .02 * cos(wpth + pi/2);
+%         
+%         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
+%
+%         if (abs(TwpTh) < .01)
+%             wpth = wpth + .01;
+%             TwpTh = .01;
+%         end
+%     end
+%     
+%     angleDiff(pi,TwpTh)
+%     if (abs(angleDiff(pi,TwpTh)) < .01 && fudged ==0)
+%         disp('Fudge2');
+%         fudged = 1;
+%         wpth = angleDiff(wpth,-.01);
+%         TwpTh = angleDiff(TwpTh, -.01);
+%         
+%     end
+%     
+%     if ((abs(angleDiff(pi/2, TwpTh)) < .01) || (abs(angleDiff(-pi/2, TwpTh)) < .01))
+%         disp('Caramel1');
+%         %fudged = 1;
+%         wpth = angleDiff(wpth,-.01)
+%         TwpTh = angleDiff(TwpTh, -.01)
+%     end
 
-         if (abs(TwpTh) < .001)
-             wpth = wpth + .001;
-             TwpTh = .001;
-         end
-     end
-     
-     angleDiff(pi,TwpTh)
-     if (abs(angleDiff(pi,TwpTh)) < .001 && fudged ==0)
-         disp('Fudge2');
-         fudged = 1;
-         wpth = angleDiff(wpth,-.0001);
-         TwpTh = angleDiff(TwpTh, -.0001);
-         
-     end
-     
-     if ((abs(angleDiff(pi/2, TwpTh)) < .001) || (abs(angleDiff(-pi/2, TwpTh)) < .01))
-         disp('Caramel1');
-         %fudged = 1;
-         wpth = angleDiff(wpth,-.0001)
-         TwpTh = angleDiff(TwpTh, -.0001)
-     end
+    [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpth);
+
+    [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
      
      xintercept = -TwpY / tan(TwpTh) + TwpX
     % minSingleTurnRadius = .5;
      
      if (xintercept ==0) 
-         xintercept = .0001; % make sign positive if zero
+         xintercept = .01 % make sign positive if zero
      end
      
      %if (abs(thi) < .001)
