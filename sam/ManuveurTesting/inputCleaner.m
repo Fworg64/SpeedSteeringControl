@@ -23,14 +23,25 @@ function [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpt
     end
     
     %if the xintercept would be zero
-    %make it not that
+    %make it not that by sliding the robot fwd  or sideways a bit
     if (tan(TwpTh) ~= 0)
         xintercept = -TwpY / tan(TwpTh) + TwpX
         if (abs(xintercept) <0.01)
+             disp("chocolate");
              xi = xi + .02 * cos(thi + pi/2);
              yi = yi + .02 * sin(thi + pi/2);
-             return;
-    end
+             %check x intercept again
+             [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth);
+             if (tan(TwpTh) ~= 0)
+                 xintercept = -TwpY / tan(TwpTh) + TwpX
+                 if (abs(xintercept) <0.01)
+                     disp("chocolate again");
+                     xi = xi + .02 * cos(thi) - .02 * cos(thi + pi/2);
+                     yi = yi + .02 * sin(thi) - .02 * sin(thi + pi/2);
+                 end
+             end
+         return; %return if a correction was made
+         end
     end
 
     %if the waypoint is pointing exactly up or down
@@ -39,7 +50,7 @@ function [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpt
          disp('Caramel1');
          %fudged = 1;
          wpth = angleDiff(wpth,-.01);
-         TwpTh = angleDiff(TwpTh, -.01);
+         %TwpTh = angleDiff(TwpTh, -.01);
          return;
     end
 
@@ -58,4 +69,6 @@ function [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpt
          thi = angleDiff(thi, -.01);
          return;
     end
+    
+    %returns normally here if no correction was made
 end

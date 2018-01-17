@@ -11,42 +11,6 @@ function [] =  turnPlotter(xi, yi, thi, wpx, wpy, wpth)
      wpy = wpy
      wpth = wpth
      AngleDiff = angleDiff(thi, wpth)
-     
-%     if (abs(thi) < .01)
-%         thi = .01;
-%         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
-%     end
-%     
-%     fudged = 0;
-%     if (abs(TwpY) < .01)
-%         disp('Fudge1');
-%         fudged = 1;
-%         wpx = wpx + .02 * sin(wpth + pi/2);
-%         wpy = wpy + .02 * cos(wpth + pi/2);
-%         
-%         [TwpX, TwpY, TwpTh] = transformPoseToRobotCoord(xi, yi,thi, wpx, wpy, wpth)
-%
-%         if (abs(TwpTh) < .01)
-%             wpth = wpth + .01;
-%             TwpTh = .01;
-%         end
-%     end
-%     
-%     angleDiff(pi,TwpTh)
-%     if (abs(angleDiff(pi,TwpTh)) < .01 && fudged ==0)
-%         disp('Fudge2');
-%         fudged = 1;
-%         wpth = angleDiff(wpth,-.01);
-%         TwpTh = angleDiff(TwpTh, -.01);
-%         
-%     end
-%     
-%     if ((abs(angleDiff(pi/2, TwpTh)) < .01) || (abs(angleDiff(-pi/2, TwpTh)) < .01))
-%         disp('Caramel1');
-%         %fudged = 1;
-%         wpth = angleDiff(wpth,-.01)
-%         TwpTh = angleDiff(TwpTh, -.01)
-%     end
 
     [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpth);
 
