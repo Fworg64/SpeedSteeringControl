@@ -16,8 +16,14 @@ function [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpt
          
          %%if they were in a line and pointing the same way
          if (abs(TwpTh) < .01)
-             thi = thi - .01;
-             wpth = wpth + .01;
+             thi = angleDiff(thi,.01);
+             wpth = angleDiff(wpth, - .01);
+         end
+         
+         %%if they were in a line and pointing opposite directions
+         if (abs(TwpTh) > pi - .01)
+             thi = angleDiff(thi,.01);
+             wpth = angleDiff(wpth, - .01);
          end
          return;
     end
