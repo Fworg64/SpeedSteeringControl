@@ -33,7 +33,7 @@ function [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpt
     if (tan(TwpTh) ~= 0)
         xintercept = -TwpY / tan(TwpTh) + TwpX
         if (abs(xintercept) <0.01)
-             disp("chocolate");
+             disp('chocolate');
              xi = xi + .02 * cos(thi + pi/2);
              yi = yi + .02 * sin(thi + pi/2);
              %check x intercept again
@@ -41,7 +41,7 @@ function [xi, yi, thi, wpx, wpy, wpth] = inputCleaner(xi, yi, thi, wpx, wpy, wpt
              if (tan(TwpTh) ~= 0)
                  xintercept = -TwpY / tan(TwpTh) + TwpX
                  if (abs(xintercept) <0.01)
-                     disp("chocolate again");
+                     disp('chocolate again');
                      xi = xi + .02 * cos(thi) - .02 * cos(thi + pi/2);
                      yi = yi + .02 * sin(thi) - .02 * sin(thi + pi/2);
                  end
