@@ -13,9 +13,9 @@ RvelCmd = RightWheelSetSpeed;
 LwheelSpeed =0;
 RwheelSpeed =0;
 dt=.015;
-time = 0:dt:24001;
+time = 0:dt:2401;
 
-robotPose = [1;0;0]; %x,y,theta
+robotPose = [1;.2;.1]; %x,y,theta
 
 VescGains = [-16];
 %control gains
