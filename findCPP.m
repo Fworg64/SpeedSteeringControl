@@ -1,6 +1,7 @@
 %%find Closest Path Point
 
 function [x,y,theta] = findCPP(robotX, robotY, CenterX, CenterY, Radius)
+  warning('findCPP has been depreciated by newFindCPP, please use it instead and note the argument order is different');
   %%nearest point on path is point on path that is on the line through the center of the circle and the robots pose that is closest to the robots pose.
   %%let theta be the angle the robot should be at this point on the path
   %%%calculating path compensation term
