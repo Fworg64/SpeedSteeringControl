@@ -12,24 +12,25 @@ LvelCmd = LeftWheelSetSpeed;
 RvelCmd = RightWheelSetSpeed;
 LwheelSpeed =0;
 RwheelSpeed =0;
-dt=.015;
-time = 0:dt:2401;
+dt=.02;
+plotPeriod = 3;
+time = 0:dt:121;
 
 robotPose = [1;.2;.1]; %x,y,theta
 
 VescGains = [-16];
 %control gains
-EPlpGain = .00120;
+EPlpGain = 0;%.00120;
 EPlpAlpha =  2*pi*dt*.00008/(2*pi*dt*.00008+1); %put EP through LP filter and integrate that for long term stability
 %EPiDecayGain = .0072*dt;
 
-EPpGain = .0015;
-EPdGain = .008; %lower number = better short term response, higher number = better long term stability
-ETpGain = .0001;
-ETdGain  =.120;
+EPpGain = 0;%.01;%.0015;
+EPdGain = .03; %lower number = better short term response, higher number = better long term stability
+ETpGain = 0;%.0001;
+ETdGain  =.16;%.120;
 EPpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %.01; % 2*pi*dt*fc/ (2*pi*dt*fc+1)
 ETpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %alpha for Fc @ dt
-WheelSpeedPGain = .009;
+WheelSpeedPGain = 0;%.009;
 %control states
 EPpLowPass=0;
 EPpLowPassPrev =0;
@@ -46,13 +47,12 @@ pathErrorPlot = zeros(3,length(time));
 pathErrorFiltPlot = zeros(2,length(time));
 ErrorDerivPlot = zeros(2,length(time));
 plotIndex=0;
-plotPeriod = 300;
 plotCounter =1;
 %figure();
 
 wheelDisturbance = ones(2,length(time));
-wheelDisturbance(1,1000:1300) = .1;
-wheelDisturbance(2,2500:3000) = .1;
+wheelDisturbance(1,1000:1100) = .5;
+wheelDisturbance(2,2500:2600) = .5;
 
 for t=time
      LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt)*wheelDisturbance(1,int16(t/dt)+1);
@@ -60,7 +60,7 @@ for t=time
      dRobot = robotdynamics(LwheelSpeed,RwheelSpeed, robotPose(3), dt, wheelR, AxelLen);
      robotPose = robotPose + dRobot;
      
-     measuredRobotPose = robotPose;% + [normrnd(0,.02);normrnd(0,.02);normrnd(0,.02)];
+     measuredRobotPose = robotPose + [normrnd(0,.02);normrnd(0,.02);normrnd(0,.02)];
      [CPPx,CPPy,CPPth] = newFindCPP(center(1), center(2), Radius, measuredRobotPose(1), measuredRobotPose(2));
      if (Radius >0)
        EPpEst = Radius - sqrt((center(1) - measuredRobotPose(1))^2 + (center(2) - measuredRobotPose(2))^2); %positive error means turn right, assume robot is pointing the correct direction
@@ -85,11 +85,11 @@ for t=time
          EPpEst = -.2;
      end
      
-%      if ETpEst > pi/2
-%          ETpEst = pi/2;
-%      elseif ETpEst < -pi/2
-%          ETpEst = -pi/2;
-%      end
+     if ETpEst > pi/2
+         ETpEst = pi/2;
+     elseif ETpEst < -pi/2
+         ETpEst = -pi/2;
+     end
      
      LvelCmd = LvelCmd + ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(LvelCmd - LeftWheelSetSpeed))*dt;
      RvelCmd = RvelCmd - ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) + (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(RvelCmd - RightWheelSetSpeed))*dt;
@@ -119,7 +119,7 @@ for t=time
          title('Wheel Speeds'); xlabel('Time (s)');ylabel('Velocity (m/s)');
          subplot(2,2,3);
          plot([0:dt:t], pathErrorPlot(:,1:plotIndex),'-', [0:dt:t], pathErrorFiltPlot(:,1:plotIndex),'*');
-         axis([0,t,-.1,.1])
+         axis([0,t,-.3,.3])
          legend('Mea. Path Error', 'Mea. Angle Error', 'Mea. Path Error LP', 'Filt Path Error', 'Filt Angle Error');
          title('Measured States w/o Noise');xlabel('Time (s)');ylabel(sprintf('Path Error (m\nAngle Error (rad)'));
          subplot(2,2,4);
