@@ -4,7 +4,7 @@ figure();
 
 Radius = -.8;
 center = [1,-.8];
-speed = .05;
+speed = -.05;
 wheelR = .3;
 AxelLen = .5;
 [LeftWheelSetSpeed, RightWheelSetSpeed] = sscv2(speed, Radius, wheelR, AxelLen, 20)

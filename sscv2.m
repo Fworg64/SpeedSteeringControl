@@ -31,5 +31,10 @@ Ul = -.5*speed*wheelR;
 Ur = .5*speed*wheelR;
 end
 
+if (speed < 0)
+Ul = -abs(Ul);
+Ur = -abs(Ur);
+end
+
 %as radius approaches 0, wheel RPM goes to infinity to satisfy speed setting...
 %need to limit speed as turn radius decreases
