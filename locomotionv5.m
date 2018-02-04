@@ -4,7 +4,7 @@ figure();
 
 Radius = -.8;
 center = [1,-.8];
-speed = -.05;
+speed = .2;
 wheelR = .3;
 AxelLen = .5;
 [LeftWheelSetSpeed, RightWheelSetSpeed] = sscv3(speed, Radius, AxelLen, .5)
@@ -13,7 +13,7 @@ RvelCmd = RightWheelSetSpeed;
 LwheelSpeed =0;
 RwheelSpeed =0;
 dt=.02;
-plotPeriod = 1;
+plotPeriod = 3;
 time = 0:dt:121;
 
 robotPose = [1;.2;.1]; %x,y,theta
@@ -27,7 +27,7 @@ EPlpAlpha =  2*pi*dt*.00008/(2*pi*dt*.00008+1); %put EP through LP filter and in
 EPpGain = 0;%.01;%.0015;
 EPdGain = .01; %lower number = better short term response, higher number = better long term stability
 ETpGain = 0;%.0001;
-ETdGain  =.6;%.120;
+ETdGain  =.3;%.120;
 EPpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %.01; % 2*pi*dt*fc/ (2*pi*dt*fc+1)
 ETpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %alpha for Fc @ dt
 WheelSpeedPGain = 0;%.009;
