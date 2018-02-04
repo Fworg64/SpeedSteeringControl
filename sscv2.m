@@ -3,8 +3,22 @@
 %Takes vehicle parameters of wheel radius and axel length as well as max allowable speed for a wheel to spin
 %returned speeds are angular velocities in Rad/s
 
+%if speed is positive
+%positive radius is forwards and towards the left
+%negative radius is forwards and towards the right
+%if speed is negative
+%positve radius is backwards and to the right (same circle as positive
+%speed)
+%negative radius is backwards and to the left (same circle as positive
+%speed)
+
+%max speed is absolute value
+%sign of speed indicates direction
+
 %Speed is .5*(LeftAngularVel + RightAngularVel)*WheelRadius; (angularVel in Rad)
 %Turn Radius is DistanceBetweenWheels/2 * (LeftAngularVel + RightAngularVel)/(RightAngularVel - LeftAngularVel)
+
+%so if speed is negative, should be able to just change sign of wheel veloc
 
 %Given Speed and Turn Radius, solve for Angular Velocities
 function [Ul,Ur] = sscv2(speed, radius, wheelR, AxelLen, MaxSpeed) %inputs are desired speed and turn radius and current wheel speeds, returns new wheel speed to set.

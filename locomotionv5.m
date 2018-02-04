@@ -7,13 +7,13 @@ center = [1,-.8];
 speed = -.05;
 wheelR = .3;
 AxelLen = .5;
-[LeftWheelSetSpeed, RightWheelSetSpeed] = sscv2(speed, Radius, wheelR, AxelLen, 20)
+[LeftWheelSetSpeed, RightWheelSetSpeed] = sscv3(speed, Radius, AxelLen, .5)
 LvelCmd = LeftWheelSetSpeed;
 RvelCmd = RightWheelSetSpeed;
 LwheelSpeed =0;
 RwheelSpeed =0;
 dt=.02;
-plotPeriod = 3;
+plotPeriod = 1;
 time = 0:dt:121;
 
 robotPose = [1;.2;.1]; %x,y,theta
@@ -25,9 +25,9 @@ EPlpAlpha =  2*pi*dt*.00008/(2*pi*dt*.00008+1); %put EP through LP filter and in
 %EPiDecayGain = .0072*dt;
 
 EPpGain = 0;%.01;%.0015;
-EPdGain = .03; %lower number = better short term response, higher number = better long term stability
+EPdGain = .01; %lower number = better short term response, higher number = better long term stability
 ETpGain = 0;%.0001;
-ETdGain  =.16;%.120;
+ETdGain  =.6;%.120;
 EPpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %.01; % 2*pi*dt*fc/ (2*pi*dt*fc+1)
 ETpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %alpha for Fc @ dt
 WheelSpeedPGain = 0;%.009;
@@ -57,7 +57,7 @@ wheelDisturbance(2,2500:2600) = .5;
 for t=time
      LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt)*wheelDisturbance(1,int16(t/dt)+1);
      RwheelSpeed = (RwheelSpeed + VescGains(1)*(RwheelSpeed - RvelCmd)*dt)*wheelDisturbance(2,int16(t/dt)+1);
-     dRobot = robotdynamics(LwheelSpeed,RwheelSpeed, robotPose(3), dt, wheelR, AxelLen);
+     dRobot = robotdynamics(LwheelSpeed/wheelR,RwheelSpeed/wheelR, robotPose(3), dt, wheelR, AxelLen);
      robotPose = robotPose + dRobot;
      
      measuredRobotPose = robotPose + [normrnd(0,.02);normrnd(0,.02);normrnd(0,.02)];
