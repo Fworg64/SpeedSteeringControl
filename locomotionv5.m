@@ -2,9 +2,12 @@
 figure();
 %control robot
 
-Radius = -.8;
-center = [1,-.8];
-speed = .2;
+%reject disturbance of 2*pi/7 rad/s on wheels
+
+Radius = -1.7;
+center = [1,-1.7];
+speed = .3;
+MaxSpeed = .5;
 wheelR = .3;
 AxelLen = .5;
 [LeftWheelSetSpeed, RightWheelSetSpeed] = sscv3(speed, Radius, AxelLen, .5)
@@ -13,21 +16,26 @@ RvelCmd = RightWheelSetSpeed;
 LwheelSpeed =0;
 RwheelSpeed =0;
 dt=.02;
-plotPeriod = 3;
-time = 0:dt:121;
+plotPeriod = 20;
+time = 0:dt:81;
 
-robotPose = [1;.2;.1]; %x,y,theta
+robotPose = [1;.4;.1]; %x,y,theta
 
-VescGains = [-16];
+VescGains = [-4];
 %control gains
 EPlpGain = 0;%.00120;
-EPlpAlpha =  2*pi*dt*.00008/(2*pi*dt*.00008+1); %put EP through LP filter and integrate that for long term stability
+EPlpAlpha = .00008;
+%WheelAlphaFC = .0000001*2*pi /7;
+%WheelAlpha =  2*pi*dt*WheelAlphaFC/(2*pi*dt*WheelAlphaFC+1); %put EP through LP filter and integrate that for long term stability
+WheelAlpha = .5;
+%wheel alpha = .5 at dt = .02 for speed = .3
+%wheel alpha = .15 at dt = .02 for speed = .1
 %EPiDecayGain = .0072*dt;
 
 EPpGain = 0;%.01;%.0015;
-EPdGain = .01; %lower number = better short term response, higher number = better long term stability
+EPdGain = .4; %lower number = better short term response, higher number = better long term stability
 ETpGain = 0;%.0001;
-ETdGain  =.3;%.120;
+ETdGain  =.4;%.120;
 EPpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %.01; % 2*pi*dt*fc/ (2*pi*dt*fc+1)
 ETpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %alpha for Fc @ dt
 WheelSpeedPGain = 0;%.009;
@@ -51,12 +59,21 @@ plotCounter =1;
 %figure();
 
 wheelDisturbance = ones(2,length(time));
-wheelDisturbance(1,1000:1100) = .5;
-wheelDisturbance(2,2500:2600) = .5;
+disturbanceLengthS = int32(.5 / dt);
+
+
+wheelDisturbance(1,int32(20/dt):((int32(20/dt) + disturbanceLengthS))) = .4;
+wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLengthS))) = .3;
 
 for t=time
      LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt)*wheelDisturbance(1,int16(t/dt)+1);
      RwheelSpeed = (RwheelSpeed + VescGains(1)*(RwheelSpeed - RvelCmd)*dt)*wheelDisturbance(2,int16(t/dt)+1);
+     
+     if (LwheelSpeed > MaxSpeed) LwheelSpeed = MaxSpeed; end
+     if (RwheelSpeed > MaxSpeed) RwheelSpeed = MaxSpeed; end
+     if (LwheelSpeed < -MaxSpeed) LwheelSpeed = -MaxSpeed; end
+     if (RwheelSpeed < -MaxSpeed) RwheelSpeed = -MaxSpeed; end
+     
      dRobot = robotdynamics(LwheelSpeed/wheelR,RwheelSpeed/wheelR, robotPose(3), dt, wheelR, AxelLen);
      robotPose = robotPose + dRobot;
      
@@ -91,8 +108,33 @@ for t=time
          ETpEst = -pi/2;
      end
      
-     LvelCmd = LvelCmd + ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(LvelCmd - LeftWheelSetSpeed))*dt;
-     RvelCmd = RvelCmd - ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) + (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(RvelCmd - RightWheelSetSpeed))*dt;
+     %LaccelInput = ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(LvelCmd - LeftWheelSetSpeed))*dt;
+     
+     LvelCmdPrev = LvelCmd;
+     RvelCmdPrev = RvelCmd;
+     
+     Lgas =  (sign(speed) * ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) + sign(speed)*(ETpGain*ETpEst + ETdGain*ETpDerivFiltEst))) *dt;
+     Rgas = -(sign(speed) * ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) + sign(speed)*(ETpGain*ETpEst + ETdGain*ETpDerivFiltEst))) *dt;
+     
+     %LvelCmd = LvelCmd - ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(LvelCmd - LeftWheelSetSpeed))*dt;
+     %RvelCmd = RvelCmd + ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(RvelCmd - RightWheelSetSpeed))*dt;
+     
+     LvelCmd = LvelCmd + Lgas;
+     RvelCmd = RvelCmd + Rgas;
+     
+     LvelCmd = WheelAlpha * LvelCmd + (1-WheelAlpha) * LvelCmdPrev;
+     RvelCmd = WheelAlpha * RvelCmd + (1-WheelAlpha) * RvelCmdPrev;
+     
+     %scale LvelCmd and RvelCmd if CPPx^2 + CPPy^2 is something...
+     %do this by passing through sscv3?
+     %%instantaneosTurnRadius = AxelLen/2 * (LvelCmd + RvelCmd)/(RvelCmd - LvelCmd);
+     %%errorSpeedScale = 1; %change this based on some distance error metric
+     %errorSpeedScale = 1/exp(4*EPpEst^2); %this shapes some of the damping of the response
+     %maybe increase radius with distance error
+     %%errorRadiusScale = 1; %correct radius with sign of EPpEst
+     %errorRadiusScale = -.01*EPpEst +1;
+     %errorRadiusScale = -.1 * EPpEst^3 +1;
+     %[LvelCmd, RvelCmd] = sscv3(speed * errorSpeedScale, instantaneosTurnRadius * errorRadiusScale, AxelLen, MaxSpeed);
      
      plotIndex = plotIndex+1;
      wheelSpeedsPlot(:,plotIndex) = [LwheelSpeed;RwheelSpeed];
@@ -119,13 +161,13 @@ for t=time
          title('Wheel Speeds'); xlabel('Time (s)');ylabel('Velocity (m/s)');
          subplot(2,2,3);
          plot([0:dt:t], pathErrorPlot(:,1:plotIndex),'-', [0:dt:t], pathErrorFiltPlot(:,1:plotIndex),'*');
-         axis([0,t,-.3,.3])
+         axis([0,t,-.5,.5])
          legend('Mea. Path Error', 'Mea. Angle Error', 'Mea. Path Error LP', 'Filt Path Error', 'Filt Angle Error');
          title('Measured States w/o Noise');xlabel('Time (s)');ylabel(sprintf('Path Error (m\nAngle Error (rad)'));
          subplot(2,2,4);
          plot([0:dt:t], ErrorDerivPlot(:,1:plotIndex),'--')
          legend('Path Filt Deriv', 'Angle Filt Deriv');
-         axis([0,t,-.1,.1])
+         axis([0,t,-.2,.2])
          title('Derivative of Errors');xlabel('Time (s)');ylabel(sprintf('Path Error Derivative (m/s)\nAngle Error Derivative (rad/s)'));
      end
     %get all sensor data
@@ -133,4 +175,3 @@ for t=time
     %set wheel accel is sum of 3 error states
     %integrate accel for wheel vel cmd
 end
-   

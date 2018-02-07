@@ -39,9 +39,11 @@ if (distancetostartsq < distancetoendsq) %turn is first maneuver
     
     xhalf = (wpX + xtangent)/2;
     yhalf = (wpY + ytangent)/2;
-    M = tan(wpTh);
-    xc2 = xhalf + sqrt(1000^2 / (M^2 +1));
-    yc2 = -1/M * (xc2 - xhalf) + yhalf;
+    %M = tan(wpTh);
+    %xc2 = xhalf + sqrt(1000^2 / (M^2 +1));
+    %yc2 = -1/M * (xc2 - xhalf) + yhalf;
+    xc2 = xhalf + radius2 * cos(wpTh + pi/2);
+    yc2 = yhalf + radius2 * sin(wpTh + pi/2);
     
     %DONT FORGET TO UNTRANSFORM!!
     [distance1,radius1,xc1,yc1] = transformManeuverToWorldCoord(robotx, roboty, robotth,distance1,radius1,xc1,yc1);
@@ -49,7 +51,7 @@ if (distancetostartsq < distancetoendsq) %turn is first maneuver
 else %turn is second
     A = 1;
     B = (2*wpY / tan(wpTh) - 2*wpX);
-    C = wpX^2 - 2*wpY*wpX/tan(wpTh) - wpY^2; %is this correct?
+    C = wpX^2 - 2*wpY*wpX/tan(wpTh) - wpY^2; %is this correct? %could this be turned into trig?
     
     potXcA = (-B + sqrt(B^2 - 4*A*C))/(2*A);
     potXcB = (-B - sqrt(B^2 - 4*A*C))/(2*A);
