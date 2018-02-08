@@ -35,7 +35,7 @@ WheelAlpha = .5;
 EPpGain = 0;%.01;%.0015;
 EPdGain = .4; %lower number = better short term response, higher number = better long term stability
 ETpGain = 0;%.0001;
-ETdGain  =.4;%.120;
+ETdGain  =.45;%.120;
 EPpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %.01; % 2*pi*dt*fc/ (2*pi*dt*fc+1)
 ETpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %alpha for Fc @ dt
 WheelSpeedPGain = 0;%.009;
@@ -59,11 +59,13 @@ plotCounter =1;
 %figure();
 
 wheelDisturbance = ones(2,length(time));
-disturbanceLengthS = int32(.5 / dt);
+disturbanceLength1S = int32(.5 / dt);
+disturbanceLength2S = int32(5 / dt);
 
 
-wheelDisturbance(1,int32(20/dt):((int32(20/dt) + disturbanceLengthS))) = .4;
-wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLengthS))) = .3;
+
+wheelDisturbance(1,int32(20/dt):((int32(20/dt) + disturbanceLength1S))) = .4;
+wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLength2S))) = .3;
 
 for t=time
      LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt)*wheelDisturbance(1,int16(t/dt)+1);
