@@ -26,8 +26,10 @@ VescGains = [-3];
 %control gains
 EPlpGain = 0;%40;%.00120;
 EPlpAlpha = 0;%.00008;
-EPfiSize = 50;
-EPfiGain = 60;
+EPfiSize = 100;
+EPfi2Size = 100;
+EPfi2Gain = 1500;
+EPfiGain = 1000;
 %WheelAlphaFC = .0000001*2*pi /7;
 %WheelAlpha =  2*pi*dt*WheelAlphaFC/(2*pi*dt*WheelAlphaFC+1); %put EP through LP filter and integrate that for long term stability
 WheelAlpha = .3; %.3
@@ -38,7 +40,7 @@ WheelAlpha = .3; %.3
 EPpGain = 40;%.01;%.0015;
 EPdGain = -120; %helps recover after disturbance passes
 ETpGain = 50;%.0001;
-ETdGain  =-20;%the lead
+ETdGain  =-10;%the lead on theta
 EPpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %.01; % 2*pi*dt*fc/ (2*pi*dt*fc+1)
 ETpLowPassGain = 2*pi*dt*.1608/(2*pi*dt*.1608+1); %alpha for Fc @ dt
 WheelSpeedPGain = 0;%.009;
@@ -52,11 +54,13 @@ ETpDerivFiltEst=0;
 EPLowPass =0;
 EPLowPassPrev = 0;
 EPfi =zeros(1,EPfiSize);
+EPfi2 = zeros(1, EPfiSize);
 EPfiIndex =1;
+EPfi2Index = 1;
 
 wheelSpeedsPlot = zeros(2,length(time));
 wheelCmdsPlot = zeros(2,length(time));
-pathErrorPlot = zeros(3,length(time));
+pathErrorPlot = zeros(4,length(time));
 pathErrorFiltPlot = zeros(2,length(time));
 ErrorDerivPlot = zeros(2,length(time));
 plotIndex=0;
@@ -74,7 +78,7 @@ wheelDisturbanceRampUp = zeros(1,int32(wheelDisturbanceRampBackUpTime/dt) +1);
 %end
 
 wheelDisturbance(1,int32(20/dt):((int32(20/dt) + disturbanceLength1S))) = .4;
-wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLength2S))) = .8;
+wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLength2S))) = .6;
 
 wheelDisturbance(2, ((int32(40/dt) + disturbanceLength2S - int32(wheelDisturbanceRampBackUpTime/dt)):(int32(40/dt) + disturbanceLength2S))) = ...
 wheelDisturbance(2, ((int32(40/dt) + disturbanceLength2S - int32(wheelDisturbanceRampBackUpTime/dt)):(int32(40/dt) + disturbanceLength2S))) + ...
@@ -112,10 +116,28 @@ for t=time
      EPpDerivFiltEst = (EPpLowPass - EPpLowPassPrev)/dt;
      ETpDerivFiltEst = angleDiff(ETpLowPass,ETpLowPassPrev)/dt;
      
-     EPfi(EPfiIndex) = EPpEst * dt;
+     if (abs(EPpEst) > .05)
+       EPfi(EPfiIndex) = EPpEst;
+     else
+       EPfi(EPfiIndex) = 0;
+     end
+     sumofEPfi = sum(EPfi) * dt;
+     if (abs(sumofEPfi) > .05)
+       EPfi(EPfi2Index) = sumofEPfi;
+     else
+       EPfi(EPfi2Index) = 0;
+     end
+     
+     EPfi2(EPfi2Index) = sumofEPfi *dt;
+     sumofEPfi2 = sum(EPfi2);
      EPfiIndex = EPfiIndex+1;
+     EPfi2Index = EPfi2Index +1;
+     
      if (EPfiIndex > EPfiSize)
        EPfiIndex =1;
+     end
+     if (EPfi2Index > EPfi2Size)
+       EPfi2Index =1;
      end
      
 
@@ -136,8 +158,10 @@ for t=time
      LvelCmdPrev = LvelCmd;
      RvelCmdPrev = RvelCmd;
      
-     Lgas =  (sign(speed) * ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst + EPfiGain*sum(EPfi)) + sign(speed)*(ETpGain*ETpEst + ETdGain*ETpDerivFiltEst))) *dt;
-     Rgas = -(sign(speed) * ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst + EPfiGain*sum(EPfi)) + sign(speed)*(ETpGain*ETpEst + ETdGain*ETpDerivFiltEst))) *dt;
+     Lgas =  (sign(speed) * ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst + EPfiGain*sumofEPfi + EPfi2Gain*sumofEPfi2)...
+            + sign(speed)*(ETpGain*ETpEst + ETdGain*ETpDerivFiltEst))) *dt;
+     Rgas = -(sign(speed) * ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst + EPfiGain*sumofEPfi + EPfi2Gain*sumofEPfi2)...
+            + sign(speed)*(ETpGain*ETpEst + ETdGain*ETpDerivFiltEst))) *dt;
      
      %LvelCmd = LvelCmd - ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(LvelCmd - LeftWheelSetSpeed))*dt;
      %RvelCmd = RvelCmd + ((EPpGain*EPpEst + EPlpGain*EPLowPass + EPdGain*EPpDerivFiltEst) - (ETpGain*ETpEst + ETdGain*ETpDerivFiltEst) - WheelSpeedPGain*(RvelCmd - RightWheelSetSpeed))*dt;
@@ -162,7 +186,7 @@ for t=time
      plotIndex = plotIndex+1;
      wheelSpeedsPlot(:,plotIndex) = [LwheelSpeed;RwheelSpeed];
      wheelCmdsPlot(:,plotIndex) = [LvelCmd, RvelCmd];
-     pathErrorPlot(:,plotIndex) = [EPpEst;ETpEst;sum(EPfi)];
+     pathErrorPlot(:,plotIndex) = [EPpEst;ETpEst;10*sumofEPfi;10*sumofEPfi2];
      pathErrorFiltPlot(:,plotIndex) = [EPpLowPass;ETpLowPass];
      ErrorDerivPlot(:,plotIndex) = [EPpDerivFiltEst;ETpDerivFiltEst];
      %plot robot
@@ -183,9 +207,9 @@ for t=time
          legend('Left Wheel Speed', 'Right Wheel Speed', 'Left Wheel Cmd', 'Right Wheel Cmd');
          title('Wheel Speeds'); xlabel('Time (s)');ylabel('Velocity (m/s)');
          subplot(2,2,3);
-         plot([0:dt:t], pathErrorPlot(:,1:plotIndex),'-', [0:dt:t], pathErrorFiltPlot(:,1:plotIndex),'*');
+         plot([0:dt:t], pathErrorPlot(1:2,1:plotIndex),'-', [0:dt:t], pathErrorPlot(3:4,1:plotIndex),'*', [0:dt:t], pathErrorFiltPlot(:,1:plotIndex),'*');
          axis([0,t,-.5,.5])
-         legend('Mea. Path Error', 'Mea. Angle Error', 'FI Path error', 'Filt Path Error', 'Filt Angle Error');
+         legend('Mea. Path Error', 'Mea. Angle Error', '10x FI Path error', '10x FI2 Path error', 'Filt Path Error', 'Filt Angle Error');
          title('Measured States w/o Noise');xlabel('Time (s)');ylabel(sprintf('Path Error (m\nAngle Error (rad)'));
          subplot(2,2,4);
          plot([0:dt:t], ErrorDerivPlot(:,1:plotIndex),'--')
