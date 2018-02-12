@@ -32,7 +32,7 @@ EPfi2Gain = 1500;
 EPfiGain = 1000;
 %WheelAlphaFC = .0000001*2*pi /7;
 %WheelAlpha =  2*pi*dt*WheelAlphaFC/(2*pi*dt*WheelAlphaFC+1); %put EP through LP filter and integrate that for long term stability
-WheelAlpha = .3; %.3
+WheelAlpha = .06; %.3
 %wheel alpha = .5 at dt = .02 for speed = .3
 %wheel alpha = .15 at dt = .02 for speed = .1
 %EPiDecayGain = .0072*dt;
@@ -73,12 +73,12 @@ disturbanceLength2S = int32(15 / dt);
 
 wheelDisturbanceRampBackUpTime = -4/VescGains(1);
 wheelDisturbanceRampUp = zeros(1,int32(wheelDisturbanceRampBackUpTime/dt) +1);
-%for (index = 0:1:(wheelDisturbanceRampBackUpTime/dt +1))
-%  wheelDisturbanceRampUp(int32(index+1)) = .2 * exp(3.4 / wheelDisturbanceRampBackUpTime *index*dt -2);
-%end
+for (index = 0:1:(wheelDisturbanceRampBackUpTime/dt +1))
+  wheelDisturbanceRampUp(int32(index+1)) = .2 * exp(3.4 / wheelDisturbanceRampBackUpTime *index*dt -2);
+end
 
 wheelDisturbance(1,int32(20/dt):((int32(20/dt) + disturbanceLength1S))) = .4;
-wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLength2S))) = .6;
+wheelDisturbance(2,int32(40/dt):((int32(40/dt) + disturbanceLength2S))) = .1;
 
 wheelDisturbance(2, ((int32(40/dt) + disturbanceLength2S - int32(wheelDisturbanceRampBackUpTime/dt)):(int32(40/dt) + disturbanceLength2S))) = ...
 wheelDisturbance(2, ((int32(40/dt) + disturbanceLength2S - int32(wheelDisturbanceRampBackUpTime/dt)):(int32(40/dt) + disturbanceLength2S))) + ...
@@ -86,15 +86,15 @@ wheelDisturbance(2, ((int32(40/dt) + disturbanceLength2S - int32(wheelDisturbanc
 
  
 for t=time
-     LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt)*wheelDisturbance(1,int16(t/dt)+1);
-     RwheelSpeed = (RwheelSpeed + VescGains(1)*(RwheelSpeed - RvelCmd)*dt)*wheelDisturbance(2,int16(t/dt)+1);
+     LwheelSpeed = (LwheelSpeed + VescGains(1)*(LwheelSpeed - LvelCmd)*dt);
+     RwheelSpeed = (RwheelSpeed + VescGains(1)*(RwheelSpeed - RvelCmd)*dt);
      
      if (LwheelSpeed > MaxSpeed) LwheelSpeed = MaxSpeed; end
      if (RwheelSpeed > MaxSpeed) RwheelSpeed = MaxSpeed; end
      if (LwheelSpeed < -MaxSpeed) LwheelSpeed = -MaxSpeed; end
      if (RwheelSpeed < -MaxSpeed) RwheelSpeed = -MaxSpeed; end
      
-     dRobot = robotdynamics(LwheelSpeed/wheelR,RwheelSpeed/wheelR, robotPose(3), dt, wheelR, AxelLen);
+     dRobot = robotdynamics(LwheelSpeed*wheelDisturbance(1,int16(t/dt)+1)/wheelR,RwheelSpeed*wheelDisturbance(2,int16(t/dt)+1)/wheelR, robotPose(3), dt, wheelR, AxelLen);
      robotPose = robotPose + dRobot;
      
      measuredRobotPose = robotPose + [normrnd(0,.02);normrnd(0,.02);normrnd(0,.02)];
@@ -184,7 +184,7 @@ for t=time
      %[LvelCmd, RvelCmd] = sscv3(speed * errorSpeedScale, instantaneosTurnRadius * errorRadiusScale, AxelLen, MaxSpeed);
      
      plotIndex = plotIndex+1;
-     wheelSpeedsPlot(:,plotIndex) = [LwheelSpeed;RwheelSpeed];
+     wheelSpeedsPlot(:,plotIndex) = [LwheelSpeed*wheelDisturbance(1,int16(t/dt)+1);RwheelSpeed*wheelDisturbance(2,int16(t/dt)+1)];
      wheelCmdsPlot(:,plotIndex) = [LvelCmd, RvelCmd];
      pathErrorPlot(:,plotIndex) = [EPpEst;ETpEst;10*sumofEPfi;10*sumofEPfi2];
      pathErrorFiltPlot(:,plotIndex) = [EPpLowPass;ETpLowPass];
